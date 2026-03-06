@@ -25,39 +25,76 @@
 // FIFO — First In First Out (non-preemptive)
 // Runs each process to completion; always selects the head of
 // the ready queue (the process that arrived earliest).
+//
+// Synchronization overview (same pattern used by all algorithms):
+//   - main() is the clock driver. Each tick it posts cpuSems[i] to
+//     wake this thread, then waits on mainSem for this thread to reply.
+//   - This thread does one unit of work per tick, then posts mainSem
+//     so main can advance the clock to the next timestep.
+//   - readyQ and finishedQ are shared with main and other CPU threads,
+//     so every access must be wrapped in the corresponding mutex lock.
 // ============================================================
 void* FIFOcpu(void* param) {
     int threadNum = ((CpuParams*) param)->threadNumber;
     SharedVars* svars = ((CpuParams*) param)->svars;
 
-    Process* p = NULL;  // currently running process; NULL when this CPU is idle
+    // p is the process currently running on this CPU.
+    // p == NULL means the CPU is idle and must pick a new process from readyQ.
+    Process* p = NULL;
 
-    // thread loops for the entire lifetime of the simulation
+    // This thread runs forever — one loop iteration = one simulation timestep.
     while (1) {
-        sem_wait(svars->cpuSems[threadNum]);    // block until main signals this timestep
+        // ── Sync point 1: wait for main to start this timestep ──────────
+        // main() posts cpuSems[threadNum] once per tick.  We block here
+        // until that post arrives, keeping this CPU in lockstep with the clock.
+        sem_wait(svars->cpuSems[threadNum]);
 
-        if (p == NULL) {                        // idle — select the next process
+        // ── Selection (only when idle) ───────────────────────────────────
+        // FIFO is non-preemptive: once a process is running (p != NULL) we
+        // never replace it mid-burst.  We only enter this block when the CPU
+        // has nothing to run.
+        if (p == NULL) {
+            // Lock readyQ before inspecting or modifying it — another CPU
+            // thread (or main inserting a new arrival) could touch it right now.
             pthread_mutex_lock(&(svars->readyQLock));
-            p = qRemove(&(svars->readyQ), 0);   // FIFO: always take from the head
+
+            // Index 0 = head of the list = the process that has been waiting
+            // the longest (qInsert always appends to the tail, so the head is
+            // always the oldest arrival — that is the FIFO selection rule).
+            p = qRemove(&(svars->readyQ), 0);
+
             if (p == NULL) {
+                // readyQ was empty — CPU stays idle this tick.
                 printf("No process to schedule\n");
             } else {
                 printf("Scheduling PID %d\n", p->PID);
             }
+
             pthread_mutex_unlock(&(svars->readyQLock));
         }
 
-        if (p != NULL) {                        // execute one timestep of burst
+        // ── Execution: one unit of work ──────────────────────────────────
+        // If we have a process (carried over from a prior tick or just
+        // selected above), burn one unit of its remaining CPU burst.
+        if (p != NULL) {
             p->burstRemaining--;
-            if (p->burstRemaining == 0) {       // process finished — move to finishedQ
+
+            if (p->burstRemaining == 0) {
+                // Process is done — move it to finishedQ so main can
+                // compute and print wait-time statistics at simulation end.
                 pthread_mutex_lock(&(svars->finishedQLock));
                 qInsert(&(svars->finishedQ), p);
                 pthread_mutex_unlock(&(svars->finishedQLock));
+
+                // CPU is now idle; it will select a new process next tick.
                 p = NULL;
             }
         }
 
-        sem_post(svars->mainSem);               // notify main that this CPU is done
+        // ── Sync point 2: signal main that this CPU is done ─────────────
+        // main() waits on mainSem once per CPU per tick.  Posting here
+        // tells main this CPU has finished its work for the current timestep.
+        sem_post(svars->mainSem);
     }
 }
 
