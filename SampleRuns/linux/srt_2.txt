@@ -1,0 +1,362 @@
+
+start of time 0
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+Scheduling PID 0
+No process to schedule
+
+start of time 1
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+No process to schedule
+
+start of time 2
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+No process to schedule
+
+start of time 3
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+No process to schedule
+
+start of time 4
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+Scheduling PID 1
+Scheduling PID 0
+
+start of time 5
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+Scheduling PID 2
+
+start of time 6
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	0: 0, 2, 10, 5, 0, 1, TRUE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+
+start of time 7
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	0: 0, 2, 10, 5, 0, 2, TRUE
+	3: 6, 3, 3, 3, 1, 1, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+
+
+start of time 8
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	0: 0, 2, 10, 5, 0, 3, TRUE
+	3: 6, 3, 3, 3, 2, 2, FALSE
+	4: 7, 5, 7, 7, 1, 1, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+
+Scheduling PID 3
+
+start of time 9
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	0: 0, 2, 10, 5, 0, 4, TRUE
+	4: 7, 5, 7, 7, 2, 2, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+
+Scheduling PID 0
+
+start of time 10
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	4: 7, 5, 7, 7, 3, 3, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+
+
+start of time 11
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	4: 7, 5, 7, 7, 4, 4, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+
+Scheduling PID 4
+
+start of time 12
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 1, 1, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+
+Scheduling PID 6
+
+start of time 13
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 2, 2, FALSE
+	4: 7, 5, 7, 6, 4, 5, TRUE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+
+
+start of time 14
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 3, 3, FALSE
+	4: 7, 5, 7, 6, 4, 6, TRUE
+	7: 13, 5, 7, 7, 1, 1, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+
+Scheduling PID 4
+
+start of time 15
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 4, 4, FALSE
+	7: 13, 5, 7, 7, 2, 2, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+
+Scheduling PID 8
+
+start of time 16
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 5, 5, FALSE
+	7: 13, 5, 7, 7, 3, 3, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+
+
+start of time 17
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 6, 6, FALSE
+	7: 13, 5, 7, 7, 4, 4, FALSE
+	9: 16, 5, 4, 4, 1, 1, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+
+Scheduling PID 10
+Scheduling PID 8
+
+start of time 18
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 7, 7, FALSE
+	7: 13, 5, 7, 7, 5, 5, FALSE
+	9: 16, 5, 4, 4, 2, 2, FALSE
+	4: 7, 5, 7, 3, 4, 7, TRUE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+	10: 17, 0, 1, 0, 0, 0, FALSE
+
+Scheduling PID 4
+
+start of time 19
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 8, 8, FALSE
+	7: 13, 5, 7, 7, 6, 6, FALSE
+	9: 16, 5, 4, 4, 3, 3, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+	10: 17, 0, 1, 0, 0, 0, FALSE
+	8: 15, 2, 4, 0, 0, 0, TRUE
+
+Scheduling PID 9
+
+start of time 20
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 9, 9, FALSE
+	7: 13, 5, 7, 7, 7, 7, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+	10: 17, 0, 1, 0, 0, 0, FALSE
+	8: 15, 2, 4, 0, 0, 0, TRUE
+
+
+start of time 21
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 10, 10, FALSE
+	7: 13, 5, 7, 7, 8, 8, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+	10: 17, 0, 1, 0, 0, 0, FALSE
+	8: 15, 2, 4, 0, 0, 0, TRUE
+	4: 7, 5, 7, 0, 4, 7, TRUE
+
+Scheduling PID 7
+
+start of time 22
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 11, 11, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+	10: 17, 0, 1, 0, 0, 0, FALSE
+	8: 15, 2, 4, 0, 0, 0, TRUE
+	4: 7, 5, 7, 0, 4, 7, TRUE
+
+Scheduling PID 11
+
+start of time 23
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 12, 12, FALSE
+	7: 13, 5, 7, 6, 8, 9, TRUE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+	10: 17, 0, 1, 0, 0, 0, FALSE
+	8: 15, 2, 4, 0, 0, 0, TRUE
+	4: 7, 5, 7, 0, 4, 7, TRUE
+	9: 16, 5, 4, 0, 3, 3, FALSE
+
+Scheduling PID 7
+
+start of time 24
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 13, 13, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+	10: 17, 0, 1, 0, 0, 0, FALSE
+	8: 15, 2, 4, 0, 0, 0, TRUE
+	4: 7, 5, 7, 0, 4, 7, TRUE
+	9: 16, 5, 4, 0, 3, 3, FALSE
+
+end of simulation
+ready:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	5: 11, 3, 8, 8, 14, 14, FALSE
+
+finished:
+	PID: arrivalTime, priority, burstTotal, burstRemaining, initialWait, totalWait, requeued
+	0: 0, 2, 10, 0, 0, 4, TRUE
+	1: 4, 2, 4, 0, 0, 0, FALSE
+	2: 5, 2, 4, 0, 0, 0, FALSE
+	3: 6, 3, 3, 0, 2, 2, FALSE
+	4: 7, 5, 7, 0, 4, 7, TRUE
+	6: 12, 0, 3, 0, 0, 0, FALSE
+	8: 15, 2, 4, 0, 0, 0, TRUE
+	9: 16, 5, 4, 0, 3, 3, FALSE
+	10: 17, 0, 1, 0, 0, 0, FALSE

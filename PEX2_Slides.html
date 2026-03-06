@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PEX 2 — CPU Scheduling Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Source+Serif+4:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="dark"]{
+  --bg:#0c0f14;--surface:#151921;--surface2:#1c2230;--border:#2a3142;
+  --text:#e0e4ec;--text-dim:#7d8698;--text-inv:#1a1d24;
+  --accent:#4fc3f7;--accent-dim:#4fc3f722;--accent2:#81c784;--accent2-dim:#81c78422;
+  --warn:#ef5350;--warn-dim:#ef535022;--gold:#ffd54f;--gold-dim:#ffd54f22;
+  --purple:#b39ddb;--purple-dim:#b39ddb22;
+  --card:#181d28;--card-border:#252c3a;
+  --info-bg:#0d47a118;--info-border:#42a5f544;
+  --success-bg:#1b5e2018;--success-border:#66bb6a44;
+  --warn-bg:#b7161618;--warn-border:#ef535044;
+  --table-head:linear-gradient(135deg,#1a237e,#283593);--table-stripe:#0d111a;
+  --shadow:0 4px 24px rgba(0,0,0,0.4);
+  --nav-bg:#151921ee;--nav-shadow:0 -4px 30px rgba(0,0,0,0.5);
+  --dot-bg:#252c3a;--dot-border:#3a4458;--dot-active:linear-gradient(135deg,#4fc3f7,#29b6f6);
+  --btn-bg:linear-gradient(135deg,#4fc3f7,#0288d1);--btn-text:#0c0f14;
+  --code-bg:#0d111a;
+  --toggle-bg:#252c3a;--toggle-hover:#2f3a4d;
+}
+[data-theme="light"]{
+  --bg:#f4f5f7;--surface:#ffffff;--surface2:#eceef2;--border:#d0d4dc;
+  --text:#1a1d24;--text-dim:#5a6172;--text-inv:#e0e4ec;
+  --accent:#1565c0;--accent-dim:#1565c018;--accent2:#2e7d32;--accent2-dim:#2e7d3218;
+  --warn:#c62828;--warn-dim:#c6282818;--gold:#e65100;--gold-dim:#e6510018;
+  --purple:#4527a0;--purple-dim:#4527a018;
+  --card:#ffffff;--card-border:#d0d4dc;
+  --info-bg:#e3f2fd;--info-border:#90caf9;
+  --success-bg:#e8f5e9;--success-border:#a5d6a7;
+  --warn-bg:#ffebee;--warn-border:#ef9a9a;
+  --table-head:linear-gradient(135deg,#1565c0,#1976d2);--table-stripe:#f8f9fb;
+  --shadow:0 2px 12px rgba(0,0,0,0.08);
+  --nav-bg:#ffffffee;--nav-shadow:0 -2px 20px rgba(0,0,0,0.1);
+  --dot-bg:#e0e3e9;--dot-border:#b0b6c3;--dot-active:linear-gradient(135deg,#1565c0,#1976d2);
+  --btn-bg:linear-gradient(135deg,#1565c0,#1976d2);--btn-text:#ffffff;
+  --code-bg:#f0f2f5;
+  --toggle-bg:#e0e3e9;--toggle-hover:#d0d4dc;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;padding-bottom:110px;transition:background .35s,color .35s;}
+h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;}
+code,.code-block{font-family:'IBM Plex Mono','Consolas',monospace;}
+.theme-toggle{position:fixed;top:14px;right:18px;z-index:200;background:var(--toggle-bg);border:1px solid var(--border);border-radius:50px;padding:6px 14px;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--text-dim);display:flex;align-items:center;gap:6px;transition:all .25s;user-select:none;}
+.theme-toggle:hover{background:var(--toggle-hover);color:var(--text);}
+.slide-container{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);max-width:960px;width:100%;max-height:calc(100vh - 150px);padding:48px 52px 36px;position:relative;overflow-y:auto;overflow-x:hidden;transition:background .35s,border-color .35s;}
+.slide-container::-webkit-scrollbar{width:6px;}
+.slide-container::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.slide{display:none;animation:fadeIn .45s ease-out;}
+.slide.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+h1{color:var(--accent);font-size:2.6em;margin-bottom:12px;text-align:center;font-weight:700;letter-spacing:-.02em;}
+h2{color:var(--accent);font-size:1.85em;margin-bottom:24px;font-weight:700;padding-bottom:10px;border-bottom:2px solid var(--accent-dim);letter-spacing:-.01em;}
+h3{color:var(--purple);font-size:1.2em;margin:18px 0 10px;font-weight:700;}
+p,li{font-size:1.02em;line-height:1.75;margin-bottom:10px;color:var(--text);}
+ul,ol{margin-left:24px;margin-bottom:14px;}
+li{margin-bottom:8px;}
+strong{font-weight:700;}
+em{font-style:italic;color:var(--text-dim);}
+.tag{padding:2px 8px;border-radius:4px;font-weight:600;font-size:.9em;}
+.tag-ok{background:var(--success-bg);border:1px solid var(--success-border);color:var(--accent2);}
+.tag-bad{background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn);}
+.tag-info{background:var(--info-bg);border:1px solid var(--info-border);color:var(--accent);}
+.tag-gold{background:var(--gold-dim);border:1px solid var(--gold);color:var(--gold);}
+.info-box{background:var(--info-bg);border-left:4px solid var(--accent);padding:14px 16px;margin:14px 0;border-radius:6px;}
+.success-box{background:var(--success-bg);border-left:4px solid var(--accent2);padding:14px 16px;margin:14px 0;border-radius:6px;}
+.warn-box{background:var(--warn-bg);border-left:4px solid var(--warn);padding:14px 16px;margin:14px 0;border-radius:6px;}
+.purple-box{background:var(--purple-dim);border:1px solid var(--purple);padding:14px 16px;margin:14px 0;border-radius:8px;}
+.code-block{background:var(--code-bg);border-left:4px solid var(--accent);padding:16px 18px;margin:14px 0;font-size:.88em;border-radius:6px;line-height:1.7;white-space:pre;overflow-x:auto;word-break:normal;}
+.code-kw{color:var(--accent);}
+.code-cm{color:var(--text-dim);font-style:italic;}
+.code-fn{color:var(--purple);}
+.code-str{color:var(--gold);}
+.code-hi{background:var(--accent-dim);border-radius:3px;padding:0 2px;}
+.code-warn{background:var(--warn-dim);border-radius:3px;padding:0 2px;}
+.code-ok{background:var(--success-bg);border-radius:3px;padding:0 2px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:14px 0;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:14px 0;}
+@media(max-width:700px){.two-col,.three-col{grid-template-columns:1fr;}}
+table{width:100%;border-collapse:collapse;margin:14px 0;}
+th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;font-size:.95em;}
+th{background:var(--table-head);color:#fff;font-weight:700;}
+tr:nth-child(even){background:var(--table-stripe);}
+.reveal-btn{display:inline-block;background:var(--accent);color:var(--btn-text);padding:6px 16px;border-radius:20px;font-size:.86em;font-weight:600;margin:10px 0 4px;cursor:pointer;transition:all .2s;user-select:none;}
+.reveal-btn:hover{filter:brightness(1.1);transform:scale(1.03);}
+.answer-panel{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:6px;display:none;animation:slideDown .4s ease-out;}
+.answer-panel.visible{display:block;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.svg-wrap{display:flex;justify-content:center;align-items:center;margin:12px 0;}
+.caption{text-align:center;color:var(--text-dim);font-size:.88em;margin-top:4px;}
+.center-content{display:flex;justify-content:center;align-items:center;flex-direction:column;min-height:420px;}
+.section-divider{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:380px;text-align:center;}
+.section-divider .section-num{font-family:'IBM Plex Mono',monospace;font-size:.95rem;font-weight:600;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:12px;opacity:.7;}
+.section-divider h2{border:none;font-size:2.2em;margin-bottom:14px;}
+.section-divider p{font-size:1.1em;color:var(--text-dim);max-width:540px;}
+.obj-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
+@media(max-width:700px){.obj-grid{grid-template-columns:1fr;}}
+.obj-card{background:var(--surface2);border:1px solid var(--card-border);border-radius:10px;padding:14px 16px;transition:border-color .2s;}
+.obj-card:hover{border-color:var(--accent);}
+.obj-card .num{display:inline-block;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--btn-text);font-weight:700;font-size:.85em;text-align:center;line-height:26px;margin-right:8px;flex-shrink:0;}
+.obj-card p{margin:0;font-size:.97em;line-height:1.6;}
+.file-card{background:var(--surface2);border:1px solid var(--card-border);border-radius:10px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px;}
+.file-card .fname{font-family:'IBM Plex Mono',monospace;font-size:.92em;font-weight:600;color:var(--accent);min-width:160px;flex-shrink:0;}
+.file-card .fdesc{font-size:.93em;line-height:1.6;color:var(--text);}
+.controls{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;justify-content:center;align-items:center;gap:14px;background:var(--nav-bg);backdrop-filter:blur(12px);padding:12px 22px;border-radius:50px;box-shadow:var(--nav-shadow);border:1px solid var(--border);z-index:100;transition:background .35s,border-color .35s;}
+.controls button{background:var(--btn-bg);color:var(--btn-text);border:none;padding:9px 20px;border-radius:22px;cursor:pointer;font-size:.92em;font-weight:700;font-family:'Instrument Sans',sans-serif;transition:all .2s;}
+.controls button:hover:not(:disabled){transform:scale(1.05);filter:brightness(1.1);}
+.controls button:disabled{opacity:.35;cursor:not-allowed;}
+.slide-nav{display:flex;gap:5px;flex-wrap:wrap;max-width:500px;justify-content:center;}
+.slide-dot{width:28px;height:28px;border-radius:50%;background:var(--dot-bg);border:2px solid var(--dot-border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.72em;font-weight:600;color:var(--text-dim);transition:all .25s;position:relative;user-select:none;}
+.slide-dot:hover{background:var(--toggle-hover);transform:scale(1.08);}
+.slide-dot.active{background:var(--dot-active);color:var(--btn-text);border-color:var(--accent);transform:scale(1.15);}
+.slide-dot::after{content:attr(data-title);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:var(--surface);color:var(--text);border:1px solid var(--border);padding:4px 10px;border-radius:5px;font-size:.7em;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s;z-index:1000;}
+.slide-dot:hover::after{opacity:1;}
+.stepper-controls{display:flex;align-items:center;gap:10px;justify-content:center;margin:10px 0 6px;}
+.stepper-controls button{background:var(--btn-bg);color:var(--btn-text);border:none;padding:6px 16px;border-radius:16px;cursor:pointer;font-size:.82rem;font-weight:700;font-family:'Instrument Sans',sans-serif;transition:all .2s;}
+.stepper-controls button:hover:not(:disabled){transform:scale(1.05);filter:brightness(1.1);}
+.stepper-controls button:disabled{opacity:.3;cursor:not-allowed;}
+.stepper-label{font-family:'IBM Plex Mono',monospace;font-size:.85em;font-weight:600;color:var(--accent);min-width:100px;text-align:center;}
+.stepper-desc{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:6px 0;font-size:.92em;line-height:1.6;min-height:42px;transition:all .3s;}
+</style>
+</head>
+<body>
+
+<div class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+  <span class="icon" id="themeIcon">&#9790;</span>
+  <span id="themeLabel">Dark</span>
+</div>
+
+<div class="slide-container">
+
+<!-- ====== SLIDE 1: Title ====== -->
+<div class="slide active">
+  <div class="center-content">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:600;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px;opacity:.6;">CS 483 -- Operating Systems</div>
+    <h1>PEX 2: CPU Scheduling Simulator</h1>
+    <h2 style="border:none;color:var(--purple);text-align:center;font-size:1.35em;margin-bottom:18px;">A Code Walkthrough &amp; Starter Guide</h2>
+    <div class="svg-wrap" style="margin-top:10px;">
+      <svg width="560" height="140" viewBox="0 0 560 140">
+        <defs>
+          <marker id="mA" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L0,7 L8,3.5 z" fill="var(--accent)"/></marker>
+          <marker id="mB" markerWidth="8" markerHeight="7" refX="0" refY="3.5" orient="auto"><path d="M8,0 L8,7 L0,3.5 z" fill="var(--accent2)"/></marker>
+        </defs>
+        <!-- Main thread box -->
+        <rect x="10" y="40" width="130" height="60" rx="10" fill="var(--surface2)" stroke="var(--accent)" stroke-width="2"/>
+        <text x="75" y="65" text-anchor="middle" font-size="11" fill="var(--accent)" font-weight="700" font-family="IBM Plex Mono">main thread</text>
+        <text x="75" y="82" text-anchor="middle" font-size="10" fill="var(--text-dim)" font-family="Instrument Sans">(the clock)</text>
+        <!-- CPU 0 -->
+        <rect x="200" y="20" width="100" height="46" rx="8" fill="var(--surface2)" stroke="var(--purple)" stroke-width="2"/>
+        <text x="250" y="40" text-anchor="middle" font-size="11" fill="var(--purple)" font-weight="700" font-family="IBM Plex Mono">CPU 0</text>
+        <text x="250" y="56" text-anchor="middle" font-size="10" fill="var(--text-dim)" font-family="Instrument Sans">thread</text>
+        <!-- CPU 1 -->
+        <rect x="200" y="76" width="100" height="46" rx="8" fill="var(--surface2)" stroke="var(--purple)" stroke-width="2"/>
+        <text x="250" y="96" text-anchor="middle" font-size="11" fill="var(--purple)" font-weight="700" font-family="IBM Plex Mono">CPU 1</text>
+        <text x="250" y="112" text-anchor="middle" font-size="10" fill="var(--text-dim)" font-family="Instrument Sans">thread</text>
+        <!-- Arrows main -> cpu -->
+        <line x1="140" y1="52" x2="198" y2="42" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#mA)"/>
+        <line x1="140" y1="80" x2="198" y2="95" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#mA)"/>
+        <!-- Arrows cpu -> main -->
+        <line x1="198" y1="56" x2="142" y2="66" stroke="var(--accent2)" stroke-width="1.8" marker-end="url(#mB)"/>
+        <line x1="198" y1="108" x2="142" y2="88" stroke="var(--accent2)" stroke-width="1.8" marker-end="url(#mB)"/>
+        <!-- Labels on arrows -->
+        <text x="164" y="46" font-size="9" fill="var(--accent)" font-family="IBM Plex Mono" font-weight="600">post</text>
+        <text x="152" y="76" font-size="9" fill="var(--accent2)" font-family="IBM Plex Mono" font-weight="600">post</text>
+        <!-- readyQ -->
+        <rect x="340" y="35" width="110" height="46" rx="8" fill="var(--surface2)" stroke="var(--gold)" stroke-width="2"/>
+        <text x="395" y="55" text-anchor="middle" font-size="11" fill="var(--gold)" font-weight="700" font-family="IBM Plex Mono">readyQ</text>
+        <text x="395" y="71" text-anchor="middle" font-size="10" fill="var(--text-dim)" font-family="Instrument Sans">shared queue</text>
+        <!-- finishedQ -->
+        <rect x="340" y="92" width="110" height="46" rx="8" fill="var(--surface2)" stroke="var(--accent2)" stroke-width="2"/>
+        <text x="395" y="112" text-anchor="middle" font-size="11" fill="var(--accent2)" font-weight="700" font-family="IBM Plex Mono">finishedQ</text>
+        <text x="395" y="128" text-anchor="middle" font-size="10" fill="var(--text-dim)" font-family="Instrument Sans">shared queue</text>
+        <!-- CPU <-> queues -->
+        <line x1="300" y1="43" x2="338" y2="55" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#mA)"/>
+        <line x1="300" y1="99" x2="338" y2="110" stroke="var(--accent2)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#mA)"/>
+        <!-- mutex lock icons -->
+        <text x="316" y="40" font-size="10" fill="var(--gold)" font-family="Instrument Sans">lock</text>
+        <text x="316" y="97" font-size="10" fill="var(--accent2)" font-family="Instrument Sans">lock</text>
+        <!-- new process arrow -->
+        <line x1="75" y1="40" x2="200" y2="55" stroke="var(--text-dim)" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#mA)"/>
+        <text x="120" y="38" font-size="9" fill="var(--text-dim)" font-family="Instrument Sans" text-anchor="middle">new process</text>
+      </svg>
+    </div>
+    <p class="caption">The main thread is the clock. CPU threads do the scheduling. Everything else is shared state.</p>
+    <p style="margin-top:14px;font-size:.95em;color:var(--text-dim);text-align:center;">Use <strong style="color:var(--accent);">&larr; &rarr;</strong> arrow keys or the buttons below to navigate.</p>
+  </div>
+</div>
+
+<!-- ====== SLIDE 2: Objectives ====== -->
+<div class="slide">
+  <h2>What You Will Know After This Walkthrough</h2>
+  <div class="obj-grid">
+    <div class="obj-card"><p><span class="num">1</span><strong>Simulator architecture</strong> &mdash; how the main thread, CPU threads, and shared queues interact at each timestep.</p></div>
+    <div class="obj-card"><p><span class="num">2</span><strong>Data structures</strong> &mdash; the <code>Process</code>, <code>Queue</code>, <code>SharedVars</code>, and <code>CpuParams</code> structs you will use directly.</p></div>
+    <div class="obj-card"><p><span class="num">3</span><strong>Synchronization model</strong> &mdash; exactly what <code>sem_wait</code> and <code>sem_post</code> to call, and in what order, inside your scheduling functions.</p></div>
+    <div class="obj-card"><p><span class="num">4</span><strong>Queue API</strong> &mdash; which queue functions to call for each algorithm (selection, preemption check, insert, remove).</p></div>
+    <div class="obj-card"><p><span class="num">5</span><strong>The FIFO template</strong> &mdash; how to read the given FIFO implementation and use it as a scaffold for the five algorithms you must write.</p></div>
+    <div class="obj-card"><p><span class="num">6</span><strong>Algorithm differences</strong> &mdash; exactly what changes between FIFO, SJF, NPP, RR, SRTF, and PP so you can implement each one efficiently.</p></div>
+  </div>
+  <div class="info-box" style="margin-top:16px;">
+    <p style="margin:0;"><strong>Your task in CPUs.c:</strong> implement <code>SJFcpu</code>, <code>NPPcpu</code>, <code>RRcpu</code>, <code>SRTFcpu</code>, and <code>PPcpu</code>. <code>FIFOcpu</code> is given to you complete.</p>
+  </div>
+</div>
+
+<!-- ====== SLIDE 3: Files Overview ====== -->
+<div class="slide">
+  <h2>The Files &mdash; What Is Given vs. What You Write</h2>
+  <div class="file-card">
+    <div class="fname">CPUs.c</div>
+    <div class="fdesc"><span class="tag tag-bad">You implement</span> &nbsp; Contains the six scheduling thread functions. <code>FIFOcpu</code> is complete and given to you. You write the other five.</div>
+  </div>
+  <div class="file-card">
+    <div class="fname">CPUs.h</div>
+    <div class="fdesc"><span class="tag tag-ok">Given &mdash; do not modify</span> &nbsp; Declares <code>SharedVars</code>, <code>CpuParams</code>, and the six thread function prototypes.</div>
+  </div>
+  <div class="file-card">
+    <div class="fname">processQueue.h</div>
+    <div class="fdesc"><span class="tag tag-ok">Given &mdash; do not modify</span> &nbsp; Defines <code>Process</code>, <code>Node</code>, <code>Queue</code>, and all queue function prototypes. Read this carefully &mdash; you will call these functions.</div>
+  </div>
+  <div class="file-card">
+    <div class="fname">processQueue.c</div>
+    <div class="fdesc"><span class="tag tag-ok">Given &mdash; do not modify</span> &nbsp; Implements the doubly-linked queue: insert, remove, search, sort, and print.</div>
+  </div>
+  <div class="file-card">
+    <div class="fname">main.c</div>
+    <div class="fdesc"><span class="tag tag-ok">Given &mdash; do not modify</span> &nbsp; Parses arguments, creates threads, drives the simulation clock loop, and prints final queue state. Also prints a pre-sim process table to <code>stderr</code>.</div>
+  </div>
+  <div class="warn-box">
+    <p style="margin:0;"><strong>Compile command:</strong> &nbsp;<code>gcc -o pex2 main.c CPUs.c processQueue.c -lpthread</code></p>
+  </div>
+</div>
+
+<!-- ====== SLIDE 4: Data Structures - Process ====== -->
+<div class="slide">
+  <h2>Data Structure: <code>Process</code></h2>
+  <p>Defined in <code>processQueue.h</code>. Each process carries all the information your CPU thread needs.</p>
+  <div class="code-block"><span class="code-kw">typedef struct</span> {
+    <span class="code-kw">int</span>  PID;            <span class="code-cm">// unique identifier (0, 1, 2, ...)</span>
+    <span class="code-kw">int</span>  arrivalTime;   <span class="code-cm">// timestep it joined the readyQ</span>
+    <span class="code-kw">int</span>  priority;      <span class="code-cm">// 0-5; LOWER number = HIGHER priority</span>
+    <span class="code-kw">int</span>  burstTotal;    <span class="code-cm">// total CPU time needed (used by SJF)</span>
+    <span class="code-kw">int</span>  <span class="code-hi">burstRemaining</span>; <span class="code-cm">// time left -- decrement this each timestep</span>
+    <span class="code-kw">int</span>  initialWait;   <span class="code-cm">// timesteps waiting before first run (auto-tracked)</span>
+    <span class="code-kw">int</span>  totalWait;     <span class="code-cm">// total timesteps spent in readyQ (auto-tracked)</span>
+    <span class="code-kw">bool</span> <span class="code-warn">requeued</span>;      <span class="code-cm">// set to true when YOU put it back in readyQ</span>
+} Process;</div>
+  <div class="two-col">
+    <div>
+      <div class="info-box">
+        <p style="margin:0;"><strong>Fields you actively use:</strong><br>
+        &bull; <code>burstRemaining</code> &mdash; decrement once per timestep<br>
+        &bull; <code>burstTotal</code> &mdash; original burst length; equals <code>burstRemaining</code> on first scheduling<br>
+        &bull; <code>priority</code> &mdash; read by NPP and PP<br>
+        &bull; <code>requeued</code> &mdash; set <code>true</code> when preempting/requeueing</p>
+      </div>
+    </div>
+    <div>
+      <div class="warn-box">
+        <p style="margin:0;"><strong>Don't forget <code>requeued</code>!</strong><br>
+        Whenever you insert a process back into <code>readyQ</code> (Round Robin quantum expiry, SRTF preemption, PP preemption), set <code>p-&gt;requeued = true</code> before calling <code>qInsert</code>.<br>
+        This field affects <code>initialWait</code> tracking.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 5: Data Structures - SharedVars & CpuParams ====== -->
+<div class="slide">
+  <h2>Data Structures: <code>SharedVars</code> &amp; <code>CpuParams</code></h2>
+  <p>Defined in <code>CPUs.h</code>. Everything shared between the main thread and all CPU threads lives in <code>SharedVars</code>.</p>
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <div class="code-block" style="font-size:.82em;"><span class="code-kw">typedef struct</span> {
+  pthread_mutex_t <span class="code-hi">readyQLock</span>;
+  pthread_mutex_t <span class="code-hi">finishedQLock</span>;
+  sem_t**         <span class="code-fn">cpuSems</span>;
+  sem_t*          <span class="code-fn">mainSem</span>;
+  Queue           readyQ;
+  Queue           finishedQ;
+  <span class="code-kw">int</span>             quantum;
+} SharedVars;
+
+<span class="code-kw">typedef struct</span> {
+  <span class="code-kw">int</span>         <span class="code-hi">threadNumber</span>;
+  SharedVars* svars;
+} CpuParams;</div>
+    </div>
+    <div>
+      <h3>Key fields</h3>
+      <ul style="font-size:.95em;">
+        <li><code>readyQLock</code> / <code>finishedQLock</code> &mdash; always lock before touching a queue, unlock immediately after</li>
+        <li><code>cpuSems[i]</code> &mdash; CPU <em>i</em> waits on this at the start of each timestep; main posts it</li>
+        <li><code>mainSem</code> &mdash; CPU posts this when done; main waits for one post per CPU</li>
+        <li><code>readyQ</code> / <code>finishedQ</code> &mdash; the shared doubly-linked queues</li>
+        <li><code>quantum</code> &mdash; only used by <code>RRcpu</code></li>
+        <li><code>threadNumber</code> &mdash; which CPU you are; used to index into <code>cpuSems</code></li>
+      </ul>
+    </div>
+  </div>
+  <div class="info-box">
+    <p style="margin:0;"><strong>Extracting your parameters at the top of every CPU function:</strong></p>
+    <div class="code-block" style="margin:8px 0 0;border-left:none;background:transparent;font-size:.88em;"><span class="code-kw">int</span> threadNum = ((<span class="code-fn">CpuParams</span>*) param)-&gt;threadNumber;
+SharedVars* svars = ((<span class="code-fn">CpuParams</span>*) param)-&gt;svars;</div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 6: Synchronization Model ====== -->
+<div class="slide">
+  <h2>Synchronization: The Clock Loop</h2>
+  <p>The main thread IS the simulation clock. Each timestep follows a strict handshake with every CPU thread.</p>
+  <div class="stepper-controls">
+    <button onclick="s6step(-1)" id="s6prev" disabled>&#9664; Prev</button>
+    <span class="stepper-label" id="s6label">Step 1</span>
+    <button onclick="s6step(1)" id="s6next">Next &#9654;</button>
+  </div>
+  <div class="stepper-desc" id="s6desc"><strong>Step 1 &mdash; Generate:</strong> Main thread optionally creates a new process and inserts it into <code>readyQ</code>.</div>
+  <div class="svg-wrap">
+    <svg id="s6svg" width="600" height="160" viewBox="0 0 600 160">
+      <defs>
+        <marker id="mS6" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L0,7 L8,3.5 z" fill="var(--accent)"/></marker>
+        <marker id="mS6b" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L0,7 L8,3.5 z" fill="var(--accent2)"/></marker>
+        <marker id="mS6c" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><path d="M0,0 L0,7 L8,3.5 z" fill="var(--gold)"/></marker>
+      </defs>
+      <!-- Timeline lines -->
+      <line x1="80" y1="30" x2="80" y2="150" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4,3"/>
+      <line x1="300" y1="30" x2="300" y2="150" stroke="var(--purple)" stroke-width="2" stroke-dasharray="4,3"/>
+      <line x1="500" y1="30" x2="500" y2="150" stroke="var(--purple)" stroke-width="2" stroke-dasharray="4,3"/>
+      <!-- Labels -->
+      <text x="80" y="22" text-anchor="middle" font-size="11" fill="var(--accent)" font-weight="700" font-family="IBM Plex Mono">main</text>
+      <text x="300" y="22" text-anchor="middle" font-size="11" fill="var(--purple)" font-weight="700" font-family="IBM Plex Mono">CPU 0</text>
+      <text x="500" y="22" text-anchor="middle" font-size="11" fill="var(--purple)" font-weight="700" font-family="IBM Plex Mono">CPU 1</text>
+      <!-- Step markers - all start hidden, shown by stepper -->
+      <!-- Step 1: generate (dot on main at top) -->
+      <circle id="s6d1" cx="80" cy="42" r="6" fill="var(--accent)" opacity="1"/>
+      <text id="s6t1" x="88" y="46" font-size="9" fill="var(--accent)" font-family="Instrument Sans">generate process</text>
+      <!-- Step 2: post to CPU 0 -->
+      <line id="s6l2a" x1="82" y1="58" x2="296" y2="68" stroke="var(--accent)" stroke-width="2" marker-end="url(#mS6)" style="display:none"/>
+      <text id="s6t2a" x="182" y="58" text-anchor="middle" font-size="9" fill="var(--accent)" font-family="IBM Plex Mono" style="display:none">sem_post(cpuSems[0])</text>
+      <line id="s6l2b" x1="82" y1="72" x2="496" y2="82" stroke="var(--accent)" stroke-width="2" marker-end="url(#mS6)" style="display:none"/>
+      <text id="s6t2b" x="290" y="70" text-anchor="middle" font-size="9" fill="var(--accent)" font-family="IBM Plex Mono" style="display:none">sem_post(cpuSems[1])</text>
+      <!-- Step 3: CPUs wake and work -->
+      <circle id="s6d3a" cx="300" cy="88" r="6" fill="var(--purple)" style="display:none"/>
+      <text id="s6t3a" x="310" y="92" font-size="9" fill="var(--purple)" font-family="Instrument Sans" style="display:none">schedule / execute</text>
+      <circle id="s6d3b" cx="500" cy="98" r="6" fill="var(--purple)" style="display:none"/>
+      <text id="s6t3b" x="510" y="102" font-size="9" fill="var(--purple)" font-family="Instrument Sans" style="display:none">schedule / execute</text>
+      <!-- Step 4: CPUs post mainSem -->
+      <line id="s6l4a" x1="298" y1="110" x2="84" y2="118" stroke="var(--accent2)" stroke-width="2" marker-end="url(#mS6b)" style="display:none"/>
+      <text id="s6t4a" x="182" y="108" text-anchor="middle" font-size="9" fill="var(--accent2)" font-family="IBM Plex Mono" style="display:none">sem_post(mainSem)</text>
+      <line id="s6l4b" x1="498" y1="118" x2="84" y2="126" stroke="var(--accent2)" stroke-width="2" marker-end="url(#mS6b)" style="display:none"/>
+      <text id="s6t4b" x="288" y="116" text-anchor="middle" font-size="9" fill="var(--accent2)" font-family="IBM Plex Mono" style="display:none">sem_post(mainSem)</text>
+      <!-- Step 5: main waits -->
+      <circle id="s6d5" cx="80" cy="136" r="6" fill="var(--gold)" style="display:none"/>
+      <text id="s6t5" x="88" y="140" font-size="9" fill="var(--gold)" font-family="Instrument Sans" style="display:none">wait x2, then advance clock</text>
+    </svg>
+  </div>
+  <div class="info-box">
+    <p style="margin:0;"><strong>Your responsibility in every CPU function:</strong> (1) call <code>sem_wait(svars-&gt;cpuSems[threadNum])</code> at the top of the loop, (2) do one timestep of work, (3) call <code>sem_post(svars-&gt;mainSem)</code> at the bottom. Never skip the post &mdash; that deadlocks the simulation.</p>
+  </div>
+</div>
+
+<!-- ====== SLIDE 7: Queue API ====== -->
+<div class="slide">
+  <h2>The Queue API &mdash; Functions You Will Call</h2>
+  <p>All declared in <code>processQueue.h</code>. You will use these directly in <code>CPUs.c</code>.</p>
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <h3>Core operations</h3>
+      <div class="code-block" style="font-size:.84em;"><span class="code-cm">// Append to tail (always inserts at end)</span>
+<span class="code-kw">void</span> <span class="code-fn">qInsert</span>(Queue* q, Process* proc);
+
+<span class="code-cm">// Remove the node at 0-based position 'which'</span>
+<span class="code-cm">// Returns NULL if queue is empty or out of bounds</span>
+Process* <span class="code-fn">qRemove</span>(Queue* q, <span class="code-kw">int</span> which);</div>
+      <h3>Position selectors (return index for qRemove)</h3>
+      <div class="code-block" style="font-size:.84em;"><span class="code-cm">// Position of the process with the shortest burstRemaining</span>
+<span class="code-kw">int</span> <span class="code-fn">qShortest</span>(Queue* q);
+
+<span class="code-cm">// Position of the highest-priority process (lowest number)</span>
+<span class="code-kw">int</span> <span class="code-fn">qPriority</span>(Queue* q);</div>
+      <h3>Value helpers (return a scalar, for comparisons)</h3>
+      <div class="code-block" style="font-size:.84em;"><span class="code-cm">// Smallest burstRemaining value in the queue</span>
+<span class="code-kw">int</span> <span class="code-fn">qShortestBR</span>(Queue* q);
+
+<span class="code-cm">// Best (lowest) priority number in the queue</span>
+<span class="code-kw">int</span> <span class="code-fn">qGetPriority</span>(Queue* q);</div>
+    </div>
+    <div>
+      <h3>The mutex pattern (every queue access)</h3>
+      <div class="code-block" style="font-size:.84em;"><span class="code-fn">pthread_mutex_lock</span>(&amp;(svars-&gt;readyQLock));
+
+p = <span class="code-fn">qRemove</span>(&amp;(svars-&gt;readyQ), <span class="code-hi">0</span>);
+<span class="code-kw">if</span> (p == <span class="code-kw">NULL</span>) {
+    <span class="code-fn">printf</span>(<span class="code-str">"No process to schedule\n"</span>);
+} <span class="code-kw">else</span> {
+    <span class="code-fn">printf</span>(<span class="code-str">"Scheduling PID %d\n"</span>, p-&gt;PID);
+}
+
+<span class="code-fn">pthread_mutex_unlock</span>(&amp;(svars-&gt;readyQLock));</div>
+      <div class="warn-box" style="margin-top:6px;">
+        <p style="margin:0;font-size:.92em;"><strong>Print INSIDE the lock.</strong> The printf for scheduling/no-process must happen while you hold the mutex. Hold the lock for the minimum time needed, then release it before executing the process.</p>
+      </div>
+      <div class="purple-box" style="margin-top:8px;">
+        <p style="margin:0;font-size:.92em;"><strong>Both selectors return 0 for empty queues.</strong> Always check if <code>qRemove</code> returned <code>NULL</code> before using <code>p</code>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 8: FIFO Walkthrough ====== -->
+<div class="slide">
+  <h2>FIFO &mdash; The Given Implementation (Read This Carefully)</h2>
+  <p>This is the complete <code>FIFOcpu</code> function. Every other algorithm follows this exact structure.</p>
+  <div class="code-block" style="font-size:.81em;"><span class="code-kw">void</span>* <span class="code-fn">FIFOcpu</span>(<span class="code-kw">void</span>* param) {
+    <span class="code-kw">int</span> threadNum = ((<span class="code-fn">CpuParams</span>*) param)-&gt;threadNumber;  <span class="code-cm">// my CPU index</span>
+    SharedVars* svars = ((<span class="code-fn">CpuParams</span>*) param)-&gt;svars;           <span class="code-cm">// shared state</span>
+
+    Process* p = <span class="code-kw">NULL</span>;  <span class="code-cm">// currently running process; NULL = this CPU is idle</span>
+
+    <span class="code-hi"><span class="code-kw">while</span> (<span class="code-warn">1</span>) {                                       // runs forever -- one iteration = one timestep</span>
+        <span class="code-fn">sem_wait</span>(svars-&gt;cpuSems[threadNum]);           <span class="code-cm">// BLOCK until main signals us</span>
+
+        <span class="code-cm">// -- SELECTION: only pick a new process when idle --</span>
+        <span class="code-kw">if</span> (p == <span class="code-kw">NULL</span>) {
+            <span class="code-fn">pthread_mutex_lock</span>(&amp;(svars-&gt;readyQLock));
+            p = <span class="code-fn">qRemove</span>(&amp;(svars-&gt;readyQ), <span class="code-ok">0</span>);          <span class="code-cm">// FIFO: always take from the head</span>
+            <span class="code-kw">if</span> (p == <span class="code-kw">NULL</span>) <span class="code-fn">printf</span>(<span class="code-str">"No process to schedule\n"</span>);
+            <span class="code-kw">else</span>           <span class="code-fn">printf</span>(<span class="code-str">"Scheduling PID %d\n"</span>, p-&gt;PID);
+            <span class="code-fn">pthread_mutex_unlock</span>(&amp;(svars-&gt;readyQLock));
+        }
+
+        <span class="code-cm">// -- EXECUTION: one timestep of CPU burst --</span>
+        <span class="code-kw">if</span> (p != <span class="code-kw">NULL</span>) {
+            p-&gt;burstRemaining<span class="code-warn">--</span>;
+            <span class="code-kw">if</span> (p-&gt;burstRemaining == <span class="code-warn">0</span>) {             <span class="code-cm">// process finished</span>
+                <span class="code-fn">pthread_mutex_lock</span>(&amp;(svars-&gt;finishedQLock));
+                <span class="code-fn">qInsert</span>(&amp;(svars-&gt;finishedQ), p);
+                <span class="code-fn">pthread_mutex_unlock</span>(&amp;(svars-&gt;finishedQLock));
+                p = <span class="code-kw">NULL</span>;
+            }
+        }
+
+        <span class="code-fn">sem_post</span>(svars-&gt;mainSem);                      <span class="code-cm">// SIGNAL main: my timestep is done</span>
+    }
+}</div>
+</div>
+
+<!-- ====== SLIDE 9: The CPU Thread Pattern ====== -->
+<div class="slide">
+  <h2>The Generic CPU Thread Pattern</h2>
+  <p>Every scheduling algorithm fits this shape. The only things that change are highlighted.</p>
+  <div class="code-block" style="font-size:.85em;"><span class="code-kw">while</span> (<span class="code-warn">1</span>) {
+    <span class="code-fn">sem_wait</span>(svars-&gt;cpuSems[threadNum]);   <span class="code-cm">// identical in all 6 algorithms</span>
+
+    <span class="code-cm">// === PREEMPTION CHECK (only in SRTF and PP) ===</span>
+    <span class="code-cm">// Lock readyQ, compare running process vs. best in queue,</span>
+    <span class="code-cm">// requeue if a better process is waiting.</span>
+
+    <span class="code-cm">// === QUANTUM CHECK (only in RR) ===</span>
+    <span class="code-cm">// If stepsWorked == quantum, requeue current process, reset counter.</span>
+
+    <span class="code-kw">if</span> (p == <span class="code-kw">NULL</span>) {                       <span class="code-cm">// idle: select from readyQ</span>
+        <span class="code-fn">pthread_mutex_lock</span>(&amp;(svars-&gt;readyQLock));
+        <span class="code-hi">p = <span class="code-fn">qRemove</span>(&amp;(svars-&gt;readyQ), &lt;SELECTION&gt;);</span>  <span class="code-cm">// differs per algorithm</span>
+        <span class="code-cm">// print Scheduling / No process</span>
+        <span class="code-fn">pthread_mutex_unlock</span>(&amp;(svars-&gt;readyQLock));
+    }
+
+    <span class="code-kw">if</span> (p != <span class="code-kw">NULL</span>) {
+        p-&gt;burstRemaining<span class="code-warn">--</span>;               <span class="code-cm">// identical in all 6 algorithms</span>
+        <span class="code-kw">if</span> (p-&gt;burstRemaining == <span class="code-warn">0</span>) {
+            <span class="code-cm">// move to finishedQ -- identical in all 6</span>
+            p = <span class="code-kw">NULL</span>;
+        }
+    }
+
+    <span class="code-fn">sem_post</span>(svars-&gt;mainSem);               <span class="code-cm">// identical in all 6 algorithms</span>
+}</div>
+  <div class="info-box">
+    <p style="margin:0;">The <strong>only</strong> things that differ between algorithms: (1) the selection function inside <code>qRemove</code>, and (2) whether there is a preemption or quantum check before the selection block.</p>
+  </div>
+</div>
+
+<!-- ====== SLIDE 10: SJF ====== -->
+<div class="slide">
+  <h2>Shortest Job First (SJF) &mdash; Non-Preemptive</h2>
+  <p>Like FIFO, SJF only selects a new process when the CPU is idle (<code>p == NULL</code>). The difference is <strong>which</strong> process is chosen.</p>
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <h3>Selection criterion</h3>
+      <p>When the CPU is idle, pick the process with the <strong>shortest remaining burst</strong> (<code>burstRemaining</code>) from the ready queue &mdash; not necessarily the one at the head. Because processes haven&rsquo;t run yet when first selected, <code>burstRemaining == burstTotal</code> at this point.</p>
+      <div class="info-box" style="margin-top:8px;">
+        <p style="margin:0;font-size:.93em;">The queue API in <code>processQueue.h</code> provides a helper that scans the queue and returns the <strong>index</strong> of the shortest job. Use that index as the argument to <code>qRemove</code>.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Algorithm rules</h3>
+      <ul>
+        <li><strong>Non-preemptive</strong> &mdash; once a process starts, it runs to completion</li>
+        <li>Only makes a selection when <code>p == NULL</code> &mdash; no change to the rest of the loop</li>
+        <li>Tie-breaking: equal <code>burstRemaining</code> &rarr; pick the one closer to the head (FIFO order)</li>
+      </ul>
+      <div class="warn-box" style="margin-top:8px;">
+        <p style="margin:0;font-size:.93em;"><strong>Think about it:</strong> The FIFO skeleton already handles execution, finishing, and semaphores. Your job is to change <em>one thing</em>: how the process is selected when the CPU is idle.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 11: NPP ====== -->
+<div class="slide">
+  <h2>Non-Preemptive Priority (NPP)</h2>
+  <p><strong>Lower priority number = higher priority</strong> (0 is most urgent). Same non-preemptive structure as SJF &mdash; the only change is the selection criterion.</p>
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <h3>Selection criterion</h3>
+      <p>When the CPU is idle, pick the process with the <strong>smallest priority number</strong> from the ready queue &mdash; not necessarily the one at the head.</p>
+      <div class="info-box" style="margin-top:8px;">
+        <p style="margin:0;font-size:.93em;">There is a queue helper that returns the index of the highest-priority process. Check <code>processQueue.h</code> &mdash; the pattern is the same as SJF, just with a different helper function.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Algorithm rules</h3>
+      <ul>
+        <li><strong>Non-preemptive</strong> &mdash; the selected process runs to completion even if a higher-priority process arrives later</li>
+        <li>Only makes a selection when <code>p == NULL</code></li>
+        <li>Tie-breaking: among equal-priority processes, pick the one closer to the head (FIFO order)</li>
+      </ul>
+      <div class="warn-box">
+        <p style="margin:0;font-size:.93em;"><strong>Remember:</strong> priority 0 is the HIGHEST priority. NPP never preempts &mdash; keep your mental model straight for when you implement PP later.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 12: Round Robin ====== -->
+<div class="slide">
+  <h2>Round Robin (RR) &mdash; Quantum-Based Preemption</h2>
+  <p>Selection is still FIFO (head of queue). The new requirement: limit how long any one process can run continuously, then rotate it to the back of the queue.</p>
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <h3>What you need to add</h3>
+      <ul>
+        <li>A counter (<code>stepsWorked</code>) declared <em>outside</em> the <code>while</code> loop so it persists across timesteps</li>
+        <li><strong>Before</strong> the <code>if (p == NULL)</code> selection block: check if <code>stepsWorked</code> has reached <code>svars-&gt;quantum</code></li>
+        <li>If the quantum has expired: put the current process back at the tail of <code>readyQ</code>, reset the counter, and set <code>p = NULL</code> so the selection block picks a new process</li>
+        <li>Increment <code>stepsWorked</code> each time the process executes; reset it when the process finishes</li>
+        <li>Set <code>p-&gt;requeued = true</code> before reinserting into <code>readyQ</code></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Key sequencing</h3>
+      <div class="info-box">
+        <p style="margin:0;font-size:.92em;"><strong>Order matters:</strong> The quantum check comes <em>before</em> the selection block. When the quantum expires: requeue, set <code>p = NULL</code>, then fall through to the selection block &mdash; all in the same timestep. No special handling needed.</p>
+      </div>
+      <div class="warn-box" style="margin-top:8px;">
+        <p style="margin:0;font-size:.92em;"><strong>Locking:</strong> Hold <code>readyQLock</code> while inserting the requeued process. The selection block already uses the lock (same as FIFO).</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 13: SRTF ====== -->
+<div class="slide">
+  <h2>Shortest Remaining Time First (SRTF) &mdash; Preemptive</h2>
+  <p>Every timestep, check whether a process in the ready queue has <strong>less burst remaining</strong> than the currently running process. If so, preempt.</p>
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <h3>What you need to add</h3>
+      <ul>
+        <li>A preemption check that runs <em>every</em> timestep, even when <code>p != NULL</code></li>
+        <li>Compare the running process's <code>burstRemaining</code> against the minimum <code>burstRemaining</code> of anything in the ready queue</li>
+        <li>If a shorter job is waiting: set <code>p-&gt;requeued = true</code>, insert <code>p</code> back into <code>readyQ</code>, set <code>p = NULL</code></li>
+        <li>Then select the process with the shortest <em>remaining</em> burst from the queue</li>
+      </ul>
+      <div class="info-box" style="margin-top:6px;">
+        <p style="margin:0;font-size:.9em;">Check <code>processQueue.h</code> &mdash; there are helpers for both getting the minimum <code>burstRemaining</code> <em>value</em> in the queue and for finding the <em>index</em> of that process.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Critical locking pattern</h3>
+      <div class="warn-box">
+        <p style="margin:0;font-size:.92em;"><strong>Hold <code>readyQLock</code> across <em>both</em> the preemption check and the selection.</strong> If you release and re-lock in between, another CPU thread could steal the shorter process from the queue before you get to it.</p>
+      </div>
+      <p style="font-size:.92em;margin-top:8px;">This differs from the non-preemptive algorithms. For SRTF, a single lock acquisition wraps both steps &mdash; the check-and-select is one atomic operation.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 14: PP ====== -->
+<div class="slide">
+  <h2>Preemptive Priority (PP)</h2>
+  <p>Same overall structure as SRTF &mdash; preemption check every timestep, single lock wrapping both check and selection. The <strong>criterion</strong> is different.</p>
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <h3>Behavior</h3>
+      <ul>
+        <li>Preempt the running process when a <strong>strictly higher-priority</strong> (lower number) process is waiting in the ready queue</li>
+        <li>Use a strict comparison: equal priority keeps the running process &mdash; avoids unnecessary context switches</li>
+        <li>When selecting, always pick the process with the <strong>lowest priority number</strong></li>
+        <li>Lower number = higher priority (same convention as NPP)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>How it differs from SRTF</h3>
+      <ul>
+        <li>SRTF asks: "Is there a shorter job?" &rarr; selects the shortest remaining burst</li>
+        <li>PP asks: "Is there a higher-priority job?" &rarr; selects the highest priority</li>
+        <li>When to hold the lock, when to requeue, when to set <code>p = NULL</code> &mdash; same structural pattern as SRTF</li>
+      </ul>
+      <div class="info-box" style="margin-top:6px;">
+        <p style="margin:0;font-size:.9em;">Check <code>processQueue.h</code> for helpers that retrieve the best priority <em>value</em> in the queue and find the <em>index</em> of that process.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 15: Algorithm Comparison ====== -->
+<div class="slide">
+  <h2>All Six Algorithms at a Glance</h2>
+  <table>
+    <tr>
+      <th>Algorithm</th>
+      <th>Preemptive?</th>
+      <th>Selection criterion</th>
+      <th>When does preemption occur?</th>
+    </tr>
+    <tr>
+      <td><strong>FIFO</strong></td>
+      <td><span class="tag tag-ok">No</span></td>
+      <td>Earliest arrival (head of queue)</td>
+      <td>&mdash;</td>
+    </tr>
+    <tr>
+      <td><strong>SJF</strong></td>
+      <td><span class="tag tag-ok">No</span></td>
+      <td>Shortest total burst</td>
+      <td>&mdash;</td>
+    </tr>
+    <tr>
+      <td><strong>NPP</strong></td>
+      <td><span class="tag tag-ok">No</span></td>
+      <td>Highest priority (lowest number)</td>
+      <td>&mdash;</td>
+    </tr>
+    <tr>
+      <td><strong>RR</strong></td>
+      <td><span class="tag tag-gold">Quantum</span></td>
+      <td>Earliest arrival (head of queue)</td>
+      <td>After every <em>quantum</em> timesteps</td>
+    </tr>
+    <tr>
+      <td><strong>SRTF</strong></td>
+      <td><span class="tag tag-bad">Yes</span></td>
+      <td>Shortest remaining burst</td>
+      <td>When a shorter job arrives in the queue</td>
+    </tr>
+    <tr>
+      <td><strong>PP</strong></td>
+      <td><span class="tag tag-bad">Yes</span></td>
+      <td>Highest priority (lowest number)</td>
+      <td>When a strictly higher-priority job arrives</td>
+    </tr>
+  </table>
+  <div class="two-col" style="margin-top:10px;">
+    <div class="info-box">
+      <p style="margin:0;font-size:.92em;"><strong>For non-preemptive (FIFO, SJF, NPP):</strong><br>Only select when <code>p == NULL</code>. Once a process is running, it stays until it finishes.</p>
+    </div>
+    <div class="warn-box">
+      <p style="margin:0;font-size:.92em;"><strong>For preemptive (SRTF, PP):</strong><br>The check-and-select logic runs <em>every</em> timestep. Hold a single lock across both the preemption check and the selection.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 16: The Process Table ====== -->
+<div class="slide">
+  <h2>The Pre-Simulation Process Table</h2>
+  <p>Before the simulation starts, the program prints a table of all processes that will arrive during the run. This goes to <code>stderr</code> so it does not affect graded output.</p>
+  <div class="code-block" style="font-size:.85em;">$ ./pex2 1 25 1 1       <span class="code-cm">(debug=1, simTime=25, 1 CPU, FIFO)</span>
+
+--- Incoming Process Table (seed=0) ---
+PID    Arrival    Burst    Priority
+---    -------    -----    --------
+0      0          2        0
+1      5          2        4
+2      8          8        4
+3      11         5        1
+4      17         7        2
+5      21         10       4
+---------------------------------------</div>
+  <div class="two-col">
+    <div>
+      <h3>How to use it</h3>
+      <ul>
+        <li>The table is <strong>identical for all algorithms</strong> &mdash; same seed, same arrivals</li>
+        <li>Before running the sim, trace your algorithm by hand using this table</li>
+        <li>Verify: which process should be running at each timestep?</li>
+        <li>Check the debug output (<code>debug=1</code>) against your hand trace</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Example analysis for FIFO</h3>
+      <ul style="font-size:.93em;">
+        <li>t=0: PID 0 arrives (burst=2). Scheduled immediately.</li>
+        <li>t=1: PID 0 runs (burst 1 left).</li>
+        <li>t=2: PID 0 finishes. Queue empty.</li>
+        <li>t=5: PID 1 arrives (burst=2). Scheduled.</li>
+        <li>t=8: PID 2 arrives (burst=8). PID 1 still running...</li>
+      </ul>
+      <div class="info-box" style="margin-top:4px;">
+        <p style="margin:0;font-size:.9em;">Try tracing SJF, NPP, or RR (q=3) using the same table before coding them up.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 17: Worked Example - FIFO vs PP ====== -->
+<div class="slide">
+  <h2>Worked Example: FIFO vs PP (seed=0, simTime=25, 1 CPU)</h2>
+  <p>Using the pre-sim table below. Key difference: PP preempts on priority; FIFO never preempts.</p>
+  <div class="code-block" style="font-size:.82em;margin-bottom:12px;">PID  Arrival  Burst  Priority
+ 0      0        2       0
+ 1      5        2       4
+ 2      8        8       4
+ 3     11        5       1
+ 4     17        7       2
+ 5     21       10       4</div>
+  <table style="font-size:.88em;">
+    <tr>
+      <th style="width:5%;">t</th>
+      <th style="width:20%;">Arrival</th>
+      <th style="width:35%;">FIFO decision</th>
+      <th style="width:40%;">PP decision</th>
+    </tr>
+    <tr>
+      <td>0</td><td>PID 0 (p=0, b=2)</td>
+      <td>Schedule PID 0</td>
+      <td>Schedule PID 0</td>
+    </tr>
+    <tr>
+      <td>2</td><td>&mdash;</td>
+      <td>PID 0 finishes (burst=2)</td>
+      <td>PID 0 finishes</td>
+    </tr>
+    <tr>
+      <td>5</td><td>PID 1 (p=4, b=2)</td>
+      <td>Schedule PID 1</td>
+      <td>Schedule PID 1</td>
+    </tr>
+    <tr>
+      <td>8</td><td>PID 2 (p=4, b=8)</td>
+      <td>Schedule PID 2</td>
+      <td>Schedule PID 2</td>
+    </tr>
+    <tr style="background:var(--warn-bg);">
+      <td><strong>11</strong></td><td><strong>PID 3 (p=1, b=5)</strong></td>
+      <td>PID 2 keeps running <em>(non-preemptive)</em></td>
+      <td><strong style="color:var(--warn);">Preempt PID 2!</strong> p2.priority=4 &gt; q.best=1. Schedule PID 3. PID 2 requeued (br=5).</td>
+    </tr>
+    <tr>
+      <td>15</td><td>&mdash;</td>
+      <td>PID 2 finishes (ran t=8&ndash;15). Schedule PID 3.</td>
+      <td>PID 3 finishes (ran t=11&ndash;15). Schedule PID 2 (still in readyQ).</td>
+    </tr>
+    <tr style="background:var(--warn-bg);">
+      <td><strong>17</strong></td><td><strong>PID 4 (p=2, b=7)</strong></td>
+      <td>PID 3 keeps running <em>(non-preemptive)</em></td>
+      <td><strong style="color:var(--warn);">Preempt PID 2!</strong> p2.priority=4 &gt; q.best=2. Schedule PID 4. PID 2 requeued (br=4).</td>
+    </tr>
+    <tr>
+      <td>20</td><td>&mdash;</td>
+      <td>PID 3 finishes (ran t=16&ndash;20). Schedule PID 4.</td>
+      <td>PID 4 running (t=17&rarr;). br=4 at end of sim.</td>
+    </tr>
+    <tr>
+      <td>21</td><td>PID 5 (p=4, b=10)</td>
+      <td>PID 4 running. PID 5&rarr;readyQ.</td>
+      <td>p4.priority=2, q.best=4: no preempt. PID 4 continues.</td>
+    </tr>
+  </table>
+  <div class="two-col" style="margin-top:10px;">
+    <div class="info-box">
+      <p style="margin:0;font-size:.91em;"><strong>FIFO end state:</strong> finished=[0,1,2,3], ready=[5]<br>PID 4 still running in CPU (started t=21, 4/7 steps done).</p>
+    </div>
+    <div class="warn-box">
+      <p style="margin:0;font-size:.91em;"><strong>PP end state:</strong> finished=[0,1,3,4], ready=[5]<br>PID 2 ran 5/8 steps total (3 remaining, in CPU). Higher-priority jobs (PID 3, PID 4) were served first.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 18: Worked Example - RR ====== -->
+<div class="slide">
+  <h2>Worked Example: Round Robin (quantum=3, 1 CPU)</h2>
+  <p>Same process set. RR rotates processes in FIFO order, cycling every 3 timesteps (or less if a process finishes early).</p>
+  <table style="font-size:.86em;">
+    <tr>
+      <th>Timestep(s)</th>
+      <th>Running</th>
+      <th>Event at start of next step</th>
+      <th>ReadyQ after event</th>
+    </tr>
+    <tr><td>t=0&ndash;1</td><td>PID 0 (b=2)</td><td>PID 0 finishes (only needed 2 of 3 quantum)</td><td>[ ]</td></tr>
+    <tr><td>t=2&ndash;4</td><td>idle</td><td>&mdash;</td><td>[ ]</td></tr>
+    <tr><td>t=5&ndash;6</td><td>PID 1 (b=2)</td><td>PID 1 finishes</td><td>[ ]</td></tr>
+    <tr><td>t=8&ndash;10</td><td>PID 2 (b=8)</td><td><strong>Quantum expires (3 steps)</strong> + PID 3 arrives at t=11</td><td>[PID 3, PID 2]</td></tr>
+    <tr style="background:var(--info-bg);"><td>t=11&ndash;13</td><td>PID 3 (b=5)</td><td><strong>Quantum expires.</strong> readyQ was [PID 2] + PID 3 requeued</td><td>[PID 2, PID 3]</td></tr>
+    <tr><td>t=14&ndash;16</td><td>PID 2 (br=5&rarr;2)</td><td><strong>Quantum expires</strong> + PID 4 arrives t=17</td><td>[PID 3, PID 4, PID 2]</td></tr>
+    <tr style="background:var(--info-bg);"><td>t=17&ndash;18</td><td>PID 3 (br=2&rarr;0)</td><td>PID 3 finishes (2 steps, &lt; quantum)</td><td>[PID 4, PID 2]</td></tr>
+    <tr><td>t=19&ndash;21</td><td>PID 4 (b=7)</td><td><strong>Quantum expires</strong> + PID 5 arrives t=21</td><td>[PID 2, PID 5, PID 4]</td></tr>
+    <tr style="background:var(--info-bg);"><td>t=22&ndash;23</td><td>PID 2 (br=2&rarr;0)</td><td>PID 2 finishes</td><td>[PID 5, PID 4]</td></tr>
+    <tr><td>t=24</td><td>PID 5 (b=10)</td><td>Sim ends</td><td>[PID 4]</td></tr>
+  </table>
+  <div class="two-col" style="margin-top:10px;">
+    <div class="success-box">
+      <p style="margin:0;font-size:.91em;"><strong>RR end state:</strong> finished=[0,1,2,3], ready=[4]<br>PID 5 running in CPU (1/10 steps done).</p>
+    </div>
+    <div class="purple-box">
+      <p style="margin:0;font-size:.91em;"><strong>Key implementation detail:</strong> At t=11, when the quantum expires, PID 3 was <em>already in readyQ</em> (main inserted it before signaling the CPU). So after requeuing PID 2 at the tail, readyQ = [PID 3, PID 2]. The head (PID 3) is selected next. This ordering matters for correct output.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 19: Testing with grade.sh (was 17) ====== -->
+<div class="slide">
+  <h2>Testing Your Implementation</h2>
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <h3>Step 1: Compile</h3>
+      <div class="code-block" style="font-size:.84em;">gcc -o pex2 main.c CPUs.c \
+    processQueue.c -lpthread</div>
+      <h3>Step 2: Run one test manually</h3>
+      <div class="code-block" style="font-size:.84em;"><span class="code-cm"># args: debug simTime numCPUs algoType</span>
+./pex2 1 25 1 2   <span class="code-cm"># SJF, 1 CPU</span>
+./pex2 1 25 1 4 3 <span class="code-cm"># RR, quantum=3</span>
+./pex2 1 25 2 5   <span class="code-cm"># SRTF, 2 CPUs</span></div>
+      <h3>Step 3: Run the grader</h3>
+      <div class="code-block" style="font-size:.84em;"><span class="code-cm"># auto-detects mac or linux</span>
+chmod +x grade.sh
+./grade.sh
+
+<span class="code-cm"># or specify platform</span>
+./grade.sh mac
+./grade.sh linux</div>
+    </div>
+    <div>
+      <h3>Sample grader output</h3>
+      <div class="code-block" style="font-size:.84em;">Platform : mac
+Samples  : SampleRuns/mac
+
+Compiling...
+Compile successful.
+
+Test          Result
+----          ------
+fifo_1        <span class="code-ok">PASS</span>
+fifo_1b       <span class="code-ok">PASS</span>
+fifo_2        <span class="code-ok">PASS</span>
+sjf_1         <span class="code-warn">FAIL</span>
+    --- first difference ---
+    &lt; No process to schedule   <span class="code-cm">(yours)</span>
+    &gt; Scheduling PID 0         <span class="code-cm">(expected)</span>
+    -------------------------
+
+Results: 3 / 13 passed</div>
+      <div class="info-box" style="margin-top:8px;">
+        <p style="margin:0;font-size:.9em;">The diff shows the <strong>first</strong> line where your output diverges. Find that timestep in the debug output and compare your algorithm's decision to the expected one.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 18: Plan of Attack ====== -->
+<div class="slide">
+  <h2>Recommended Plan of Attack</h2>
+  <ol style="font-size:.98em;line-height:2;">
+    <li><strong>Read <code>FIFOcpu</code> until you fully understand every line.</strong> Do not write any code yet. Trace through it mentally with the process table from slide 16.</li>
+    <li><strong>Implement SJF.</strong> It is one line different from FIFO. Run <code>grade.sh</code> immediately. If <code>sjf_1</code> and <code>sjf_2</code> pass, move on.</li>
+    <li><strong>Implement NPP.</strong> Another one-line change. Verify <code>pnp_1</code> and <code>pnp_2</code> pass.</li>
+    <li><strong>Implement RR.</strong> Add the <code>stepsWorked</code> counter and the quantum check block before the selection. Verify <code>rro_1</code> and <code>rro_2</code> pass.</li>
+    <li><strong>Implement SRTF.</strong> Move the lock to wrap both the preemption check and the <code>qRemove</code>. Verify <code>srt_1</code> and <code>srt_2</code> pass.</li>
+    <li><strong>Implement PP.</strong> Copy SRTF structure, swap the two function names. Verify <code>ppp_1</code> and <code>ppp_2</code> pass.</li>
+  </ol>
+  <div class="success-box">
+    <p style="margin:0;"><strong>Get FIFO passing the grader first (it should, out of the box), then commit your code. Commit after every algorithm that passes.</strong></p>
+  </div>
+  <div class="info-box">
+    <p style="margin:0;font-size:.93em;"><strong>The debug flag (<code>1</code> as first argument)</strong> prints the full queue state at the start of every timestep. Use it together with the process table to trace exactly which process should be running when.</p>
+  </div>
+</div>
+
+<!-- ====== SLIDE 19: Common Pitfalls ====== -->
+<div class="slide">
+  <h2>Common Pitfalls</h2>
+  <div class="three-col" style="align-items:start;">
+    <div>
+      <div class="warn-box">
+        <h3 style="margin-top:0;font-size:1em;">Deadlock</h3>
+        <p style="font-size:.92em;">Forgetting <code>sem_post(mainSem)</code> at the end of the loop will freeze the entire simulation. The main thread waits forever for a post that never comes.</p>
+      </div>
+      <div class="warn-box">
+        <h3 style="margin-top:0;font-size:1em;">Missing <code>requeued = true</code></h3>
+        <p style="font-size:.92em;">Whenever you put a process back into <code>readyQ</code> (RR, SRTF, PP), set <code>p->requeued = true</code> before calling <code>qInsert</code>. Missing this corrupts <code>initialWait</code> statistics.</p>
+      </div>
+    </div>
+    <div>
+      <div class="warn-box">
+        <h3 style="margin-top:0;font-size:1em;">Race condition in SRTF/PP</h3>
+        <p style="font-size:.92em;">If you check whether to preempt, release the lock, then re-lock to call <code>qRemove</code>, another CPU can steal the process in between. Keep a single lock across both operations.</p>
+      </div>
+      <div class="warn-box">
+        <h3 style="margin-top:0;font-size:1em;">Printing outside the lock</h3>
+        <p style="font-size:.92em;">The <code>printf</code> for "Scheduling PID X" / "No process to schedule" must happen while holding <code>readyQLock</code>, so output order is consistent with queue state.</p>
+      </div>
+    </div>
+    <div>
+      <div class="warn-box">
+        <h3 style="margin-top:0;font-size:1em;">Segfault from NULL dereference</h3>
+        <p style="font-size:.92em;"><code>qRemove</code> returns <code>NULL</code> for an empty queue. Always check before using <code>p</code>. Add <code>-fsanitize=address</code> to your compile flags to get better diagnostics.</p>
+      </div>
+      <div class="info-box">
+        <h3 style="margin-top:0;font-size:1em;color:var(--accent);">Useful debug flags</h3>
+        <p style="font-size:.92em;margin:0;"><code>-Wall -Werror</code> &mdash; required for submission<br>
+        <code>-fsanitize=address</code> &mdash; finds memory bugs<br>
+        <code>-g</code> &mdash; enables debugger symbols for gdb</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SLIDE 20: Summary ====== -->
+<div class="slide">
+  <div class="section-divider">
+    <div class="section-num">PEX 2 Starter Guide</div>
+    <h2>You Have What You Need</h2>
+    <p>Six algorithms. One pattern. Five variations.<br>Start with FIFO. Build from there. Test early and often.</p>
+    <div style="margin-top:28px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;max-width:640px;">
+      <div style="background:var(--surface2);border:1px solid var(--card-border);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.4em;font-weight:700;color:var(--accent);">5</div>
+        <div style="font-size:.88em;color:var(--text-dim);">algorithms to implement</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--card-border);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.4em;font-weight:700;color:var(--accent2);">12</div>
+        <div style="font-size:.88em;color:var(--text-dim);">test cases in grade.sh</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--card-border);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.4em;font-weight:700;color:var(--purple);">1</div>
+        <div style="font-size:.88em;color:var(--text-dim);">pattern to master</div>
+      </div>
+    </div>
+    <div class="info-box" style="max-width:540px;margin-top:24px;">
+      <p style="margin:0;text-align:left;"><strong>Quick reference:</strong><br>
+      &bull; Compile: <code>gcc -o pex2 main.c CPUs.c processQueue.c -lpthread</code><br>
+      &bull; Run FIFO: <code>./pex2 1 25 1 1</code><br>
+      &bull; Grade: <code>./grade.sh</code></p>
+    </div>
+  </div>
+</div>
+
+</div><!-- end slide-container -->
+
+<div class="controls" id="controls">
+  <button onclick="changeSlide(-1)" id="prevBtn">Previous</button>
+  <div class="slide-nav" id="slideNav"></div>
+  <button onclick="changeSlide(1)" id="nextBtn">Next</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+const slideTitles = [
+  "Title","Objectives","Files","Process Struct","SharedVars",
+  "Sync Model","Queue API","FIFO Walkthrough","CPU Pattern",
+  "SJF","NPP","Round Robin","SRTF","Preemptive Priority",
+  "Algo Comparison","Process Table","FIFO vs PP","RR Trace",
+  "Testing","Plan of Attack","Pitfalls","Summary"
+];
+
+function buildNav() {
+  const nav = document.getElementById('slideNav');
+  nav.innerHTML = '';
+  slideTitles.forEach((t, i) => {
+    const d = document.createElement('div');
+    d.className = 'slide-dot' + (i === 0 ? ' active' : '');
+    d.textContent = i + 1;
+    d.setAttribute('data-title', t);
+    d.onclick = () => goToSlide(i);
+    nav.appendChild(d);
+  });
+}
+
+function toggleReveal(b) {
+  const p = b.nextElementSibling;
+  const v = p.classList.contains('visible');
+  if (v) { p.classList.remove('visible'); b.textContent = b.textContent.replace('Hide','Show'); }
+  else    { p.classList.add('visible');    b.textContent = b.textContent.replace('Show','Hide'); }
+}
+
+function resetReveal(e) {
+  e.querySelectorAll('.answer-panel').forEach(a => a.classList.remove('visible'));
+}
+
+function goToSlide(n) {
+  resetReveal(slides[currentSlide]);
+  slides[currentSlide].classList.remove('active');
+  document.querySelectorAll('.slide-dot')[currentSlide].classList.remove('active');
+  currentSlide = Math.max(0, Math.min(n, totalSlides - 1));
+  slides[currentSlide].classList.add('active');
+  document.querySelectorAll('.slide-dot')[currentSlide].classList.add('active');
+  document.getElementById('prevBtn').disabled = currentSlide === 0;
+  document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+  document.querySelector('.slide-container').scrollTop = 0;
+}
+
+function changeSlide(d) { goToSlide(currentSlide + d); }
+
+function toggleTheme() {
+  const h = document.documentElement;
+  const dk = h.getAttribute('data-theme') === 'dark';
+  h.setAttribute('data-theme', dk ? 'light' : 'dark');
+  document.getElementById('themeIcon').textContent = dk ? '\u263E' : '\u2600';
+  document.getElementById('themeLabel').textContent = dk ? 'Dark' : 'Light';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') changeSlide(1);
+  else if (e.key === 'ArrowLeft'  || e.key === 'PageUp')   changeSlide(-1);
+});
+
+/* ===== Slide 6: Sync stepper ===== */
+var s6cur = 0;
+var s6steps = [
+  {lbl:'Step 1', desc:'<strong>Step 1 &mdash; Generate:</strong> Main thread optionally creates a new process and inserts it into <code>readyQ</code> (protected by <code>readyQLock</code>).', show:['s6d1','s6t1'], hide:['s6l2a','s6t2a','s6l2b','s6t2b','s6d3a','s6t3a','s6d3b','s6t3b','s6l4a','s6t4a','s6l4b','s6t4b','s6d5','s6t5']},
+  {lbl:'Step 2', desc:'<strong>Step 2 &mdash; Signal CPUs:</strong> Main calls <code>sem_post(cpuSems[i])</code> for each CPU in order, releasing them to start their timestep work.', show:['s6l2a','s6t2a','s6l2b','s6t2b'], hide:['s6d3a','s6t3a','s6d3b','s6t3b','s6l4a','s6t4a','s6l4b','s6t4b','s6d5','s6t5']},
+  {lbl:'Step 3', desc:'<strong>Step 3 &mdash; CPU Work:</strong> Each CPU thread unblocks from <code>sem_wait</code>, performs its scheduling decision, executes one burst unit, and moves finished processes to <code>finishedQ</code>.', show:['s6d3a','s6t3a','s6d3b','s6t3b'], hide:['s6l4a','s6t4a','s6l4b','s6t4b','s6d5','s6t5']},
+  {lbl:'Step 4', desc:'<strong>Step 4 &mdash; CPUs signal main:</strong> Each CPU calls <code>sem_post(mainSem)</code> when done. <em>You are responsible for this call at the bottom of your while loop.</em>', show:['s6l4a','s6t4a','s6l4b','s6t4b'], hide:['s6d5','s6t5']},
+  {lbl:'Step 5', desc:'<strong>Step 5 &mdash; Main waits &amp; advances:</strong> Main calls <code>sem_wait(mainSem)</code> once per CPU, increments wait times, then repeats the whole cycle for the next timestep.', show:['s6d5','s6t5'], hide:[]}
+];
+
+function s6step(d) {
+  s6cur = Math.max(0, Math.min(s6cur + d, s6steps.length - 1));
+  var st = s6steps[s6cur];
+  document.getElementById('s6label').textContent = st.lbl;
+  document.getElementById('s6desc').innerHTML = st.desc;
+  // show all up to current step
+  for (var i = 0; i <= s6cur; i++) {
+    s6steps[i].show.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = '';
+    });
+  }
+  st.hide.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('s6prev').disabled = s6cur === 0;
+  document.getElementById('s6next').disabled = s6cur === s6steps.length - 1;
+}
+
+buildNav();
+document.getElementById('prevBtn').disabled = true;
+</script>
+</body>
+</html>
