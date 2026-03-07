@@ -112,26 +112,6 @@ void* SJFcpu(void* param) {
     while (1) {
         sem_wait(svars->cpuSems[threadNum]);
 
-        if (p == NULL) {
-            pthread_mutex_lock(&(svars->readyQLock));
-
-            // TODO: Select the process with the shortest remaining burst (burstRemaining).
-            //       See processQueue.h for the available queue helpers.
-            //       Print "Scheduling PID X\n" or "No process to schedule\n".
-
-            pthread_mutex_unlock(&(svars->readyQLock));
-        }
-
-        if (p != NULL) {
-            p->burstRemaining--;
-            if (p->burstRemaining == 0) {
-                pthread_mutex_lock(&(svars->finishedQLock));
-                qInsert(&(svars->finishedQ), p);
-                pthread_mutex_unlock(&(svars->finishedQLock));
-                p = NULL;
-            }
-        }
-
         sem_post(svars->mainSem);
     }
 }
@@ -151,26 +131,6 @@ void* NPPcpu(void* param) {
     while (1) {
         sem_wait(svars->cpuSems[threadNum]);
 
-        if (p == NULL) {
-            pthread_mutex_lock(&(svars->readyQLock));
-
-            // TODO: Select the process with the highest priority (lowest number).
-            //       See processQueue.h for the available queue helpers.
-            //       Print "Scheduling PID X\n" or "No process to schedule\n".
-
-            pthread_mutex_unlock(&(svars->readyQLock));
-        }
-
-        if (p != NULL) {
-            p->burstRemaining--;
-            if (p->burstRemaining == 0) {
-                pthread_mutex_lock(&(svars->finishedQLock));
-                qInsert(&(svars->finishedQ), p);
-                pthread_mutex_unlock(&(svars->finishedQLock));
-                p = NULL;
-            }
-        }
-
         sem_post(svars->mainSem);
     }
 }
@@ -185,39 +145,9 @@ void* RRcpu(void* param) {
     SharedVars* svars = ((CpuParams*) param)->svars;
 
     Process* p = NULL;
-    // TODO: declare an integer counter (e.g. stepsWorked) here, outside the loop,
-    //       to track how many timesteps the current process has run this quantum.
 
     while (1) {
         sem_wait(svars->cpuSems[threadNum]);
-
-        // TODO: Before selecting, check whether the current process has used its
-        //       full quantum (compare your counter to svars->quantum). If so,
-        //       put it back in readyQ (set requeued=true first), reset the counter,
-        //       and set p = NULL so the selection block picks a new process.
-        //       Hold readyQLock while modifying the queue.
-
-        if (p == NULL) {
-            pthread_mutex_lock(&(svars->readyQLock));
-
-            // TODO: Select from the head of the ready queue.
-            //       Print "Scheduling PID X\n" or "No process to schedule\n".
-
-            pthread_mutex_unlock(&(svars->readyQLock));
-        }
-
-        if (p != NULL) {
-            p->burstRemaining--;
-            if (p->burstRemaining == 0) {
-                pthread_mutex_lock(&(svars->finishedQLock));
-                qInsert(&(svars->finishedQ), p);
-                pthread_mutex_unlock(&(svars->finishedQLock));
-                p = NULL;
-                // TODO: reset your step counter here (process finished early)
-            } else {
-                // TODO: increment your step counter here
-            }
-        }
 
         sem_post(svars->mainSem);
     }
@@ -227,10 +157,6 @@ void* RRcpu(void* param) {
 // SRTF — Shortest Remaining Time First (preemptive)
 // Preempts the running process whenever a shorter job is in the
 // ready queue; selects the process with the smallest burstRemaining.
-//
-// Note: hold readyQLock across both the preemption check AND the
-//       new selection — this prevents another CPU thread from
-//       modifying the queue in between those two steps.
 // ============================================================
 void* SRTFcpu(void* param) {
     int threadNum = ((CpuParams*) param)->threadNumber;
@@ -241,28 +167,6 @@ void* SRTFcpu(void* param) {
     while (1) {
         sem_wait(svars->cpuSems[threadNum]);
 
-        pthread_mutex_lock(&(svars->readyQLock));
-
-        // TODO: Check whether a shorter job is waiting in readyQ.
-        //       If so, preempt the running process (mark it requeued,
-        //       put it back in readyQ, set p = NULL).
-        //
-        // TODO: If p is NULL (idle or just preempted), select the process
-        //       with the shortest remaining burst.
-        //       Print "Scheduling PID X\n" or "No process to schedule\n".
-
-        pthread_mutex_unlock(&(svars->readyQLock));
-
-        if (p != NULL) {
-            p->burstRemaining--;
-            if (p->burstRemaining == 0) {
-                pthread_mutex_lock(&(svars->finishedQLock));
-                qInsert(&(svars->finishedQ), p);
-                pthread_mutex_unlock(&(svars->finishedQLock));
-                p = NULL;
-            }
-        }
-
         sem_post(svars->mainSem);
     }
 }
@@ -270,12 +174,7 @@ void* SRTFcpu(void* param) {
 // ============================================================
 // PP — Preemptive Priority
 // Preempts the running process when a higher-priority (lower-
-// numbered) process is in the ready queue. Use strict '>' so that
-// equal priority keeps the running process (avoids unnecessary
-// context switches).
-//
-// Note: hold readyQLock across both the preemption check AND the
-//       new selection (same reason as SRTF).
+// numbered) process is in the ready queue.
 // ============================================================
 void* PPcpu(void* param) {
     int threadNum = ((CpuParams*) param)->threadNumber;
@@ -285,28 +184,6 @@ void* PPcpu(void* param) {
 
     while (1) {
         sem_wait(svars->cpuSems[threadNum]);
-
-        pthread_mutex_lock(&(svars->readyQLock));
-
-        // TODO: Check whether a strictly higher-priority job is waiting in readyQ.
-        //       If so, preempt the running process (mark it requeued,
-        //       put it back in readyQ, set p = NULL).
-        //
-        // TODO: If p is NULL (idle or just preempted), select the process
-        //       with the highest priority (lowest number).
-        //       Print "Scheduling PID X\n" or "No process to schedule\n".
-
-        pthread_mutex_unlock(&(svars->readyQLock));
-
-        if (p != NULL) {
-            p->burstRemaining--;
-            if (p->burstRemaining == 0) {
-                pthread_mutex_lock(&(svars->finishedQLock));
-                qInsert(&(svars->finishedQ), p);
-                pthread_mutex_unlock(&(svars->finishedQLock));
-                p = NULL;
-            }
-        }
 
         sem_post(svars->mainSem);
     }

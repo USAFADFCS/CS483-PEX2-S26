@@ -79,7 +79,7 @@ em{font-style:italic;color:var(--text-dim);}
 .code-hi{background:var(--accent-dim);border-radius:3px;padding:0 2px;}
 .code-warn{background:var(--warn-dim);border-radius:3px;padding:0 2px;}
 .code-ok{background:var(--success-bg);border-radius:3px;padding:0 2px;}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:14px 0;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:14px 0;}.two-col>div{min-width:0;}
 .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:14px 0;}
 @media(max-width:700px){.two-col,.three-col{grid-template-columns:1fr;}}
 table{width:100%;border-collapse:collapse;margin:14px 0;}
@@ -380,20 +380,20 @@ SharedVars* svars = ((<span class="code-fn">CpuParams</span>*) param)-&gt;svars;
   <div class="two-col" style="align-items:start;">
     <div>
       <h3>Core operations</h3>
-      <div class="code-block" style="font-size:.84em;"><span class="code-cm">// Append to tail (always inserts at end)</span>
+      <div class="code-block" style="font-size:.84em;overflow-x:hidden;white-space:pre-wrap;"><span class="code-cm">// Append to tail (always inserts at end)</span>
 <span class="code-kw">void</span> <span class="code-fn">qInsert</span>(Queue* q, Process* proc);
 
 <span class="code-cm">// Remove the node at 0-based position 'which'</span>
 <span class="code-cm">// Returns NULL if queue is empty or out of bounds</span>
 Process* <span class="code-fn">qRemove</span>(Queue* q, <span class="code-kw">int</span> which);</div>
       <h3>Position selectors (return index for qRemove)</h3>
-      <div class="code-block" style="font-size:.84em;"><span class="code-cm">// Position of the process with the shortest burstRemaining</span>
+      <div class="code-block" style="font-size:.84em;overflow-x:hidden;white-space:pre-wrap;"><span class="code-cm">// Position of the process with the shortest burstRemaining</span>
 <span class="code-kw">int</span> <span class="code-fn">qShortest</span>(Queue* q);
 
 <span class="code-cm">// Position of the highest-priority process (lowest number)</span>
 <span class="code-kw">int</span> <span class="code-fn">qPriority</span>(Queue* q);</div>
       <h3>Value helpers (return a scalar, for comparisons)</h3>
-      <div class="code-block" style="font-size:.84em;"><span class="code-cm">// Smallest burstRemaining value in the queue</span>
+      <div class="code-block" style="font-size:.84em;overflow-x:hidden;white-space:pre-wrap;"><span class="code-cm">// Smallest burstRemaining value in the queue</span>
 <span class="code-kw">int</span> <span class="code-fn">qShortestBR</span>(Queue* q);
 
 <span class="code-cm">// Best (lowest) priority number in the queue</span>
@@ -401,7 +401,7 @@ Process* <span class="code-fn">qRemove</span>(Queue* q, <span class="code-kw">in
     </div>
     <div>
       <h3>The mutex pattern (every queue access)</h3>
-      <div class="code-block" style="font-size:.84em;"><span class="code-fn">pthread_mutex_lock</span>(&amp;(svars-&gt;readyQLock));
+      <div class="code-block" style="font-size:.84em;overflow-x:hidden;white-space:pre-wrap;"><span class="code-fn">pthread_mutex_lock</span>(&amp;(svars-&gt;readyQLock));
 
 p = <span class="code-fn">qRemove</span>(&amp;(svars-&gt;readyQ), <span class="code-hi">0</span>);
 <span class="code-kw">if</span> (p == <span class="code-kw">NULL</span>) {
@@ -425,36 +425,67 @@ p = <span class="code-fn">qRemove</span>(&amp;(svars-&gt;readyQ), <span class="c
 <div class="slide">
   <h2>FIFO &mdash; The Given Implementation (Read This Carefully)</h2>
   <p>This is the complete <code>FIFOcpu</code> function. Every other algorithm follows this exact structure.</p>
-  <div class="code-block" style="font-size:.81em;"><span class="code-kw">void</span>* <span class="code-fn">FIFOcpu</span>(<span class="code-kw">void</span>* param) {
-    <span class="code-kw">int</span> threadNum = ((<span class="code-fn">CpuParams</span>*) param)-&gt;threadNumber;  <span class="code-cm">// my CPU index</span>
-    SharedVars* svars = ((<span class="code-fn">CpuParams</span>*) param)-&gt;svars;           <span class="code-cm">// shared state</span>
+  <div class="code-block" style="font-size:.81em;overflow-x:hidden;white-space:pre-wrap;"><span class="code-kw">void</span>* <span class="code-fn">FIFOcpu</span>(<span class="code-kw">void</span>* param) {
+    <span class="code-kw">int</span> threadNum = ((<span class="code-fn">CpuParams</span>*) param)-&gt;threadNumber;
+    SharedVars* svars = ((<span class="code-fn">CpuParams</span>*) param)-&gt;svars;
 
-    Process* p = <span class="code-kw">NULL</span>;  <span class="code-cm">// currently running process; NULL = this CPU is idle</span>
+    <span class="code-cm">// p is the process currently running on this CPU.</span>
+    <span class="code-cm">// p == NULL means the CPU is idle and must pick a new process from readyQ.</span>
+    Process* p = <span class="code-kw">NULL</span>;
 
-    <span class="code-hi"><span class="code-kw">while</span> (<span class="code-warn">1</span>) {                                       // runs forever -- one iteration = one timestep</span>
-        <span class="code-fn">sem_wait</span>(svars-&gt;cpuSems[threadNum]);           <span class="code-cm">// BLOCK until main signals us</span>
+    <span class="code-cm">// This thread runs forever &mdash; one loop iteration = one simulation timestep.</span>
+    <span class="code-kw">while</span> (<span class="code-warn">1</span>) {
+        <span class="code-cm">// &mdash;&mdash; Sync point 1: wait for main to start this timestep &mdash;&mdash;&mdash;&mdash;&mdash;&mdash;</span>
+        <span class="code-cm">// main() posts cpuSems[threadNum] once per tick. We block here</span>
+        <span class="code-cm">// until that post arrives, keeping this CPU in lockstep with the clock.</span>
+        <span class="code-fn">sem_wait</span>(svars-&gt;cpuSems[threadNum]);
 
-        <span class="code-cm">// -- SELECTION: only pick a new process when idle --</span>
+        <span class="code-cm">// &mdash;&mdash; Selection (only when idle) &mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;</span>
+        <span class="code-cm">// FIFO is non-preemptive: once a process is running (p != NULL) we</span>
+        <span class="code-cm">// never replace it mid-burst. We only enter this block when the CPU</span>
+        <span class="code-cm">// has nothing to run.</span>
         <span class="code-kw">if</span> (p == <span class="code-kw">NULL</span>) {
+            <span class="code-cm">// Lock readyQ before inspecting or modifying it &mdash; another CPU</span>
+            <span class="code-cm">// thread (or main inserting a new arrival) could touch it right now.</span>
             <span class="code-fn">pthread_mutex_lock</span>(&amp;(svars-&gt;readyQLock));
-            p = <span class="code-fn">qRemove</span>(&amp;(svars-&gt;readyQ), <span class="code-ok">0</span>);          <span class="code-cm">// FIFO: always take from the head</span>
-            <span class="code-kw">if</span> (p == <span class="code-kw">NULL</span>) <span class="code-fn">printf</span>(<span class="code-str">"No process to schedule\n"</span>);
-            <span class="code-kw">else</span>           <span class="code-fn">printf</span>(<span class="code-str">"Scheduling PID %d\n"</span>, p-&gt;PID);
+
+            <span class="code-cm">// Index 0 = head of the list = the process that has been waiting</span>
+            <span class="code-cm">// the longest (qInsert always appends to the tail, so the head is</span>
+            <span class="code-cm">// always the oldest arrival &mdash; that is the FIFO selection rule).</span>
+            p = <span class="code-fn">qRemove</span>(&amp;(svars-&gt;readyQ), <span class="code-ok">0</span>);
+
+            <span class="code-kw">if</span> (p == <span class="code-kw">NULL</span>) {
+                <span class="code-cm">// readyQ was empty &mdash; CPU stays idle this tick.</span>
+                <span class="code-fn">printf</span>(<span class="code-str">"No process to schedule\n"</span>);
+            } <span class="code-kw">else</span> {
+                <span class="code-fn">printf</span>(<span class="code-str">"Scheduling PID %d\n"</span>, p-&gt;PID);
+            }
+
             <span class="code-fn">pthread_mutex_unlock</span>(&amp;(svars-&gt;readyQLock));
         }
 
-        <span class="code-cm">// -- EXECUTION: one timestep of CPU burst --</span>
+        <span class="code-cm">// &mdash;&mdash; Execution: one unit of work &mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;</span>
+        <span class="code-cm">// If we have a process (carried over from a prior tick or just</span>
+        <span class="code-cm">// selected above), burn one unit of its remaining CPU burst.</span>
         <span class="code-kw">if</span> (p != <span class="code-kw">NULL</span>) {
             p-&gt;burstRemaining<span class="code-warn">--</span>;
-            <span class="code-kw">if</span> (p-&gt;burstRemaining == <span class="code-warn">0</span>) {             <span class="code-cm">// process finished</span>
+
+            <span class="code-kw">if</span> (p-&gt;burstRemaining == <span class="code-warn">0</span>) {
+                <span class="code-cm">// Process is done &mdash; move it to finishedQ so main can</span>
+                <span class="code-cm">// compute and print wait-time statistics at simulation end.</span>
                 <span class="code-fn">pthread_mutex_lock</span>(&amp;(svars-&gt;finishedQLock));
                 <span class="code-fn">qInsert</span>(&amp;(svars-&gt;finishedQ), p);
                 <span class="code-fn">pthread_mutex_unlock</span>(&amp;(svars-&gt;finishedQLock));
+
+                <span class="code-cm">// CPU is now idle; it will select a new process next tick.</span>
                 p = <span class="code-kw">NULL</span>;
             }
         }
 
-        <span class="code-fn">sem_post</span>(svars-&gt;mainSem);                      <span class="code-cm">// SIGNAL main: my timestep is done</span>
+        <span class="code-cm">// &mdash;&mdash; Sync point 2: signal main that this CPU is done &mdash;&mdash;&mdash;&mdash;&mdash;</span>
+        <span class="code-cm">// main() waits on mainSem once per CPU per tick. Posting here</span>
+        <span class="code-cm">// tells main this CPU has finished its work for the current timestep.</span>
+        <span class="code-fn">sem_post</span>(svars-&gt;mainSem);
     }
 }</div>
 </div>
@@ -462,170 +493,20 @@ p = <span class="code-fn">qRemove</span>(&amp;(svars-&gt;readyQ), <span class="c
 <!-- ====== SLIDE 9: The CPU Thread Pattern ====== -->
 <div class="slide">
   <h2>The Generic CPU Thread Pattern</h2>
-  <p>Every scheduling algorithm fits this shape. The only things that change are highlighted.</p>
-  <div class="code-block" style="font-size:.85em;"><span class="code-kw">while</span> (<span class="code-warn">1</span>) {
-    <span class="code-fn">sem_wait</span>(svars-&gt;cpuSems[threadNum]);   <span class="code-cm">// identical in all 6 algorithms</span>
-
-    <span class="code-cm">// === PREEMPTION CHECK (only in SRTF and PP) ===</span>
-    <span class="code-cm">// Lock readyQ, compare running process vs. best in queue,</span>
-    <span class="code-cm">// requeue if a better process is waiting.</span>
-
-    <span class="code-cm">// === QUANTUM CHECK (only in RR) ===</span>
-    <span class="code-cm">// If stepsWorked == quantum, requeue current process, reset counter.</span>
-
-    <span class="code-kw">if</span> (p == <span class="code-kw">NULL</span>) {                       <span class="code-cm">// idle: select from readyQ</span>
-        <span class="code-fn">pthread_mutex_lock</span>(&amp;(svars-&gt;readyQLock));
-        <span class="code-hi">p = <span class="code-fn">qRemove</span>(&amp;(svars-&gt;readyQ), &lt;SELECTION&gt;);</span>  <span class="code-cm">// differs per algorithm</span>
-        <span class="code-cm">// print Scheduling / No process</span>
-        <span class="code-fn">pthread_mutex_unlock</span>(&amp;(svars-&gt;readyQLock));
-    }
-
-    <span class="code-kw">if</span> (p != <span class="code-kw">NULL</span>) {
-        p-&gt;burstRemaining<span class="code-warn">--</span>;               <span class="code-cm">// identical in all 6 algorithms</span>
-        <span class="code-kw">if</span> (p-&gt;burstRemaining == <span class="code-warn">0</span>) {
-            <span class="code-cm">// move to finishedQ -- identical in all 6</span>
-            p = <span class="code-kw">NULL</span>;
-        }
-    }
-
-    <span class="code-fn">sem_post</span>(svars-&gt;mainSem);               <span class="code-cm">// identical in all 6 algorithms</span>
-}</div>
-  <div class="info-box">
-    <p style="margin:0;">The <strong>only</strong> things that differ between algorithms: (1) the selection function inside <code>qRemove</code>, and (2) whether there is a preemption or quantum check before the selection block.</p>
-  </div>
-</div>
-
-<!-- ====== SLIDE 10: SJF ====== -->
-<div class="slide">
-  <h2>Shortest Job First (SJF) &mdash; Non-Preemptive</h2>
-  <p>Like FIFO, SJF only selects a new process when the CPU is idle (<code>p == NULL</code>). The difference is <strong>which</strong> process is chosen.</p>
-  <div class="two-col" style="align-items:start;">
-    <div>
-      <h3>Selection criterion</h3>
-      <p>When the CPU is idle, pick the process with the <strong>shortest remaining burst</strong> (<code>burstRemaining</code>) from the ready queue &mdash; not necessarily the one at the head. Because processes haven&rsquo;t run yet when first selected, <code>burstRemaining == burstTotal</code> at this point.</p>
-      <div class="info-box" style="margin-top:8px;">
-        <p style="margin:0;font-size:.93em;">The queue API in <code>processQueue.h</code> provides a helper that scans the queue and returns the <strong>index</strong> of the shortest job. Use that index as the argument to <code>qRemove</code>.</p>
-      </div>
+  <p>Every CPU function builds on the same synchronization skeleton given in <code>FIFOcpu</code>. The differences between algorithms are conceptual &mdash; figure out the code structure by reading what you have.</p>
+  <div class="three-col" style="margin-top:16px;">
+    <div class="obj-card">
+      <p><strong>Selection criterion</strong><br>Which process is picked from <code>readyQ</code> when the CPU is idle. This changes in every algorithm.</p>
     </div>
-    <div>
-      <h3>Algorithm rules</h3>
-      <ul>
-        <li><strong>Non-preemptive</strong> &mdash; once a process starts, it runs to completion</li>
-        <li>Only makes a selection when <code>p == NULL</code> &mdash; no change to the rest of the loop</li>
-        <li>Tie-breaking: equal <code>burstRemaining</code> &rarr; pick the one closer to the head (FIFO order)</li>
-      </ul>
-      <div class="warn-box" style="margin-top:8px;">
-        <p style="margin:0;font-size:.93em;"><strong>Think about it:</strong> The FIFO skeleton already handles execution, finishing, and semaphores. Your job is to change <em>one thing</em>: how the process is selected when the CPU is idle.</p>
-      </div>
+    <div class="obj-card">
+      <p><strong>Quantum rotation (RR only)</strong><br>A running process may be returned to <code>readyQ</code> after a fixed number of timesteps, even if it is not finished.</p>
+    </div>
+    <div class="obj-card">
+      <p><strong>Preemption (SRTF &amp; PP only)</strong><br>A running process may be displaced mid-burst when a &ldquo;better&rdquo; process appears in <code>readyQ</code>.</p>
     </div>
   </div>
-</div>
-
-<!-- ====== SLIDE 11: NPP ====== -->
-<div class="slide">
-  <h2>Non-Preemptive Priority (NPP)</h2>
-  <p><strong>Lower priority number = higher priority</strong> (0 is most urgent). Same non-preemptive structure as SJF &mdash; the only change is the selection criterion.</p>
-  <div class="two-col" style="align-items:start;">
-    <div>
-      <h3>Selection criterion</h3>
-      <p>When the CPU is idle, pick the process with the <strong>smallest priority number</strong> from the ready queue &mdash; not necessarily the one at the head.</p>
-      <div class="info-box" style="margin-top:8px;">
-        <p style="margin:0;font-size:.93em;">There is a queue helper that returns the index of the highest-priority process. Check <code>processQueue.h</code> &mdash; the pattern is the same as SJF, just with a different helper function.</p>
-      </div>
-    </div>
-    <div>
-      <h3>Algorithm rules</h3>
-      <ul>
-        <li><strong>Non-preemptive</strong> &mdash; the selected process runs to completion even if a higher-priority process arrives later</li>
-        <li>Only makes a selection when <code>p == NULL</code></li>
-        <li>Tie-breaking: among equal-priority processes, pick the one closer to the head (FIFO order)</li>
-      </ul>
-      <div class="warn-box">
-        <p style="margin:0;font-size:.93em;"><strong>Remember:</strong> priority 0 is the HIGHEST priority. NPP never preempts &mdash; keep your mental model straight for when you implement PP later.</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ====== SLIDE 12: Round Robin ====== -->
-<div class="slide">
-  <h2>Round Robin (RR) &mdash; Quantum-Based Preemption</h2>
-  <p>Selection is still FIFO (head of queue). The new requirement: limit how long any one process can run continuously, then rotate it to the back of the queue.</p>
-  <div class="two-col" style="align-items:start;">
-    <div>
-      <h3>What you need to add</h3>
-      <ul>
-        <li>A counter (<code>stepsWorked</code>) declared <em>outside</em> the <code>while</code> loop so it persists across timesteps</li>
-        <li><strong>Before</strong> the <code>if (p == NULL)</code> selection block: check if <code>stepsWorked</code> has reached <code>svars-&gt;quantum</code></li>
-        <li>If the quantum has expired: put the current process back at the tail of <code>readyQ</code>, reset the counter, and set <code>p = NULL</code> so the selection block picks a new process</li>
-        <li>Increment <code>stepsWorked</code> each time the process executes; reset it when the process finishes</li>
-        <li>Set <code>p-&gt;requeued = true</code> before reinserting into <code>readyQ</code></li>
-      </ul>
-    </div>
-    <div>
-      <h3>Key sequencing</h3>
-      <div class="info-box">
-        <p style="margin:0;font-size:.92em;"><strong>Order matters:</strong> The quantum check comes <em>before</em> the selection block. When the quantum expires: requeue, set <code>p = NULL</code>, then fall through to the selection block &mdash; all in the same timestep. No special handling needed.</p>
-      </div>
-      <div class="warn-box" style="margin-top:8px;">
-        <p style="margin:0;font-size:.92em;"><strong>Locking:</strong> Hold <code>readyQLock</code> while inserting the requeued process. The selection block already uses the lock (same as FIFO).</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ====== SLIDE 13: SRTF ====== -->
-<div class="slide">
-  <h2>Shortest Remaining Time First (SRTF) &mdash; Preemptive</h2>
-  <p>Every timestep, check whether a process in the ready queue has <strong>less burst remaining</strong> than the currently running process. If so, preempt.</p>
-  <div class="two-col" style="align-items:start;">
-    <div>
-      <h3>What you need to add</h3>
-      <ul>
-        <li>A preemption check that runs <em>every</em> timestep, even when <code>p != NULL</code></li>
-        <li>Compare the running process's <code>burstRemaining</code> against the minimum <code>burstRemaining</code> of anything in the ready queue</li>
-        <li>If a shorter job is waiting: set <code>p-&gt;requeued = true</code>, insert <code>p</code> back into <code>readyQ</code>, set <code>p = NULL</code></li>
-        <li>Then select the process with the shortest <em>remaining</em> burst from the queue</li>
-      </ul>
-      <div class="info-box" style="margin-top:6px;">
-        <p style="margin:0;font-size:.9em;">Check <code>processQueue.h</code> &mdash; there are helpers for both getting the minimum <code>burstRemaining</code> <em>value</em> in the queue and for finding the <em>index</em> of that process.</p>
-      </div>
-    </div>
-    <div>
-      <h3>Critical locking pattern</h3>
-      <div class="warn-box">
-        <p style="margin:0;font-size:.92em;"><strong>Hold <code>readyQLock</code> across <em>both</em> the preemption check and the selection.</strong> If you release and re-lock in between, another CPU thread could steal the shorter process from the queue before you get to it.</p>
-      </div>
-      <p style="font-size:.92em;margin-top:8px;">This differs from the non-preemptive algorithms. For SRTF, a single lock acquisition wraps both steps &mdash; the check-and-select is one atomic operation.</p>
-    </div>
-  </div>
-</div>
-
-<!-- ====== SLIDE 14: PP ====== -->
-<div class="slide">
-  <h2>Preemptive Priority (PP)</h2>
-  <p>Same overall structure as SRTF &mdash; preemption check every timestep, single lock wrapping both check and selection. The <strong>criterion</strong> is different.</p>
-  <div class="two-col" style="align-items:start;">
-    <div>
-      <h3>Behavior</h3>
-      <ul>
-        <li>Preempt the running process when a <strong>strictly higher-priority</strong> (lower number) process is waiting in the ready queue</li>
-        <li>Use a strict comparison: equal priority keeps the running process &mdash; avoids unnecessary context switches</li>
-        <li>When selecting, always pick the process with the <strong>lowest priority number</strong></li>
-        <li>Lower number = higher priority (same convention as NPP)</li>
-      </ul>
-    </div>
-    <div>
-      <h3>How it differs from SRTF</h3>
-      <ul>
-        <li>SRTF asks: "Is there a shorter job?" &rarr; selects the shortest remaining burst</li>
-        <li>PP asks: "Is there a higher-priority job?" &rarr; selects the highest priority</li>
-        <li>When to hold the lock, when to requeue, when to set <code>p = NULL</code> &mdash; same structural pattern as SRTF</li>
-      </ul>
-      <div class="info-box" style="margin-top:6px;">
-        <p style="margin:0;font-size:.9em;">Check <code>processQueue.h</code> for helpers that retrieve the best priority <em>value</em> in the queue and find the <em>index</em> of that process.</p>
-      </div>
-    </div>
+  <div class="info-box" style="margin-top:14px;">
+    <p style="margin:0;"><strong>Start from <code>FIFOcpu</code>.</strong> Read every line until you understand it fully. Then ask: what is the minimum change needed to make this function behave like SJF? Like NPP? Like RR?</p>
   </div>
 </div>
 
@@ -681,7 +562,7 @@ p = <span class="code-fn">qRemove</span>(&amp;(svars-&gt;readyQ), <span class="c
       <p style="margin:0;font-size:.92em;"><strong>For non-preemptive (FIFO, SJF, NPP):</strong><br>Only select when <code>p == NULL</code>. Once a process is running, it stays until it finishes.</p>
     </div>
     <div class="warn-box">
-      <p style="margin:0;font-size:.92em;"><strong>For preemptive (SRTF, PP):</strong><br>The check-and-select logic runs <em>every</em> timestep. Hold a single lock across both the preemption check and the selection.</p>
+      <p style="margin:0;font-size:.92em;"><strong>For preemptive (SRTF, PP):</strong><br>The check-and-select logic runs <em>every</em> timestep, not just when the CPU is idle. Think carefully about your locking strategy.</p>
     </div>
   </div>
 </div>
@@ -887,15 +768,14 @@ Results: 3 / 13 passed</div>
 <div class="slide">
   <h2>Recommended Plan of Attack</h2>
   <ol style="font-size:.98em;line-height:2;">
-    <li><strong>Read <code>FIFOcpu</code> until you fully understand every line.</strong> Do not write any code yet. Trace through it mentally with the process table from slide 16.</li>
-    <li><strong>Implement SJF.</strong> It is one line different from FIFO. Run <code>grade.sh</code> immediately. If <code>sjf_1</code> and <code>sjf_2</code> pass, move on.</li>
-    <li><strong>Implement NPP.</strong> Another one-line change. Verify <code>pnp_1</code> and <code>pnp_2</code> pass.</li>
-    <li><strong>Implement RR.</strong> Add the <code>stepsWorked</code> counter and the quantum check block before the selection. Verify <code>rro_1</code> and <code>rro_2</code> pass.</li>
-    <li><strong>Implement SRTF.</strong> Move the lock to wrap both the preemption check and the <code>qRemove</code>. Verify <code>srt_1</code> and <code>srt_2</code> pass.</li>
-    <li><strong>Implement PP.</strong> Copy SRTF structure, swap the two function names. Verify <code>ppp_1</code> and <code>ppp_2</code> pass.</li>
+    <li><strong>Read <code>FIFOcpu</code> until you understand every line.</strong> Do not write any code yet. Use the process table (slide 11) to trace through it step by step by hand.</li>
+    <li><strong>Implement the non-preemptive algorithms first</strong> (SJF, NPP). They differ from FIFO only in which process is selected from the ready queue. Run <code>grade.sh</code> after each one.</li>
+    <li><strong>Implement RR.</strong> Selection is the same as FIFO, but you need to handle quantum expiry. Think carefully about what state you need to track across timesteps.</li>
+    <li><strong>Implement the preemptive algorithms</strong> (SRTF, PP). These require an additional check every timestep &mdash; not just when the CPU is idle. Think carefully about your locking strategy.</li>
+    <li><strong>Run <code>grade.sh</code> after each algorithm.</strong> A passing test confirms correctness before you move on.</li>
   </ol>
   <div class="success-box">
-    <p style="margin:0;"><strong>Get FIFO passing the grader first (it should, out of the box), then commit your code. Commit after every algorithm that passes.</strong></p>
+    <p style="margin:0;"><strong>Start with FIFO passing the grader (it should, out of the box), then commit. Commit after every algorithm that passes.</strong></p>
   </div>
   <div class="info-box">
     <p style="margin:0;font-size:.93em;"><strong>The debug flag (<code>1</code> as first argument)</strong> prints the full queue state at the start of every timestep. Use it together with the process table to trace exactly which process should be running when.</p>
@@ -985,7 +865,6 @@ let currentSlide = 0;
 const slideTitles = [
   "Title","Objectives","Files","Process Struct","SharedVars",
   "Sync Model","Queue API","FIFO Walkthrough","CPU Pattern",
-  "SJF","NPP","Round Robin","SRTF","Preemptive Priority",
   "Algo Comparison","Process Table","FIFO vs PP","RR Trace",
   "Testing","Plan of Attack","Pitfalls","Summary"
 ];
